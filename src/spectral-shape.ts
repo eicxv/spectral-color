@@ -28,16 +28,18 @@ export class SpectralShape {
   private validate(): void {
     if (this.start > this.end) {
       throw new Error(
-        "End wavelength must be equal or larger than start wavelength"
+        `End wavelength ${this.end} must be equal or larger than start wavelength ${this.start}`
       );
     }
     if (this.interval <= 0) {
-      throw new Error("Interval must be larger than zero");
+      throw new Error(`Interval ${this.interval} must be larger than zero`);
     }
     const remainder = (this.end - this.start) % this.interval;
     const tol = 1e-8;
     if (remainder > tol && remainder < this.interval - tol) {
-      throw new Error("Span does not match interval");
+      throw new Error(
+        `Span [${this.start}, ${this.end}] does not match sampling interval ${this.interval}`
+      );
     }
   }
 }
