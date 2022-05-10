@@ -15,10 +15,11 @@ export function spdToXyz(
   illuminant: ISpectralDistribution<number> = D65
 ): Vec3 {
   let xyz = cmfs.zipWith(spec, (a, b) => scaleVec(a, b)).sum();
-  xyz = scaleVec(xyz, cmfs.interval);
+  xyz = scaleVec(xyz, cmfs.shape.interval);
   if (!emissive) {
     const k =
-      illuminant.zipWith(cmfs, (a, b) => a * b[1]).sum() * illuminant.interval;
+      illuminant.zipWith(cmfs, (a, b) => a * b[1]).sum() *
+      illuminant.shape.interval;
     xyz = scaleVec(xyz, 1 / k);
   }
   return xyz as Vec3;
