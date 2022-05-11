@@ -1,16 +1,5 @@
 import { Shape } from "../spectral-distribution/shape";
-
-function range(start: number, n: number, interval = 1): number[] {
-  return Array.from(new Array(n), (_, i) => i * interval + start);
-}
-
-function linComb(a: number[], b: number[]): number {
-  return a.reduce((acc, e, i) => acc + e * b[i], 0);
-}
-
-function powerSeries(x: number, n: number): number[] {
-  return Array.from(new Array(n), (_, i) => x ** i);
-}
+import { linearCombination, powerSeries, range } from "../utils/utils";
 
 export interface Interpolator<T extends number | number[]> {
   samples: Readonly<Array<T>>;
@@ -120,10 +109,10 @@ export class Sprague extends BaseInterpolator {
     const coefficients = Sprague.boundaryCoefficients;
     const mult = Sprague.boundaryMult;
     const ends = {
-      [-1]: linComb(first, coefficients[1]) * mult,
-      [-2]: linComb(first, coefficients[0]) * mult,
-      [n]: linComb(last, coefficients[1]) * mult,
-      [n + 1]: linComb(last, coefficients[0]) * mult,
+      [-1]: linearCombination(first, coefficients[1]) * mult,
+      [-2]: linearCombination(first, coefficients[0]) * mult,
+      [n]: linearCombination(last, coefficients[1]) * mult,
+      [n + 1]: linearCombination(last, coefficients[0]) * mult,
     };
     return ends;
   }
@@ -131,13 +120,13 @@ export class Sprague extends BaseInterpolator {
   private aCoefficients(window: number[]): number[] {
     const coefficients = Sprague.evalCoefficients;
     const mult = Sprague.evalMult;
-    const a = coefficients.map((c) => linComb(c, window) * mult);
+    const a = coefficients.map((c) => linearCombination(c, window) * mult);
     return a;
   }
 
   evaluate(window: number[], t: number): number {
     const a = this.aCoefficients(window);
     const x = powerSeries(t, 6);
-    return linComb(a, x);
+    return linearCombination(a, x);
   }
 }
