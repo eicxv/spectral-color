@@ -1,10 +1,10 @@
 import { toBeDeepCloseTo, toMatchCloseTo } from "jest-matcher-deep-close-to";
 import { beforeEach, describe, expect, it } from "vitest";
+import { Shape } from "./shape";
 import {
   MultiSpectralDistribution,
   SpectralDistribution,
 } from "./spectral-distribution";
-import { SpectralShape } from "./spectral-shape";
 
 expect.extend({ toBeDeepCloseTo, toMatchCloseTo });
 
@@ -16,7 +16,7 @@ describe("SpectralDistribution", () => {
       [new SpectralDistribution([0, 10], 1, samples), [0, 10, 1]],
       [new SpectralDistribution(5, 5, samples), [5, 55, 5]],
       [
-        new SpectralDistribution(new SpectralShape(-0.5, 0.5, 0.1), samples),
+        new SpectralDistribution(new Shape(-0.5, 0.5, 0.1), samples),
         [-0.5, 0.5, 0.1],
       ],
     ];

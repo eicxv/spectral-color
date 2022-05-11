@@ -1,4 +1,4 @@
-import { SpectralDistribution } from "../spectral-distribution";
+import { SpectralDistribution } from "../spectral-distribution/spectral-distribution";
 import D65Data from "./data/illuminants/D65.json";
 
 export const D65 = new SpectralDistribution(

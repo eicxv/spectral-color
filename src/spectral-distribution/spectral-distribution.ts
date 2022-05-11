@@ -1,12 +1,13 @@
-import { SpectralShape } from "./spectral-shape";
+import { Shape } from "./shape";
 
 export enum Interpolation {
-  linear,
-  nearest,
+  Linear,
+  Nearest,
+  Sprague,
 }
 
 export interface ISpectralDistribution<T> {
-  shape: SpectralShape;
+  shape: Shape;
   [Symbol.iterator](): IterableIterator<[number, T]>;
   wavelengths(): IterableIterator<number>;
   samples(): IterableIterator<T>;
@@ -27,14 +28,14 @@ export interface ISpectralDistribution<T> {
 }
 
 abstract class BaseSpectralDistribution<T> implements ISpectralDistribution<T> {
-  shape: SpectralShape;
+  shape: Shape;
   protected _samples: Array<T>;
 
-  constructor(shape: SpectralShape, samples: Array<T>);
+  constructor(shape: Shape, samples: Array<T>);
   constructor(span: [number, number], interval: number, samples: Array<T>);
   constructor(start: number, interval: number, samples: Array<T>);
   constructor(
-    shapeSpanOrStart: number | [number, number] | SpectralShape,
+    shapeSpanOrStart: number | [number, number] | Shape,
     samplesOrInterval: number | Array<T>,
     samplesOrUndef?: Array<T>
   ) {
@@ -56,23 +57,23 @@ abstract class BaseSpectralDistribution<T> implements ISpectralDistribution<T> {
   }
 
   private initShape(
-    shapeSpanOrStart: number | [number, number] | SpectralShape,
+    shapeSpanOrStart: number | [number, number] | Shape,
     samplesOrInterval: number | Array<T>,
     samplesOrUndef?: Array<T>
-  ): SpectralShape {
-    if (shapeSpanOrStart instanceof SpectralShape) {
+  ): Shape {
+    if (shapeSpanOrStart instanceof Shape) {
       return shapeSpanOrStart;
     }
     if (Array.isArray(shapeSpanOrStart)) {
       const span = shapeSpanOrStart;
       const interval = samplesOrInterval as number;
-      return new SpectralShape(span, interval);
+      return new Shape(span, interval);
     } else {
       const start = shapeSpanOrStart;
       const interval = samplesOrInterval as number;
       const samples = samplesOrUndef as Array<T>;
       const end = start + (samples.length - 1) * interval;
-      return new SpectralShape(start, end, interval);
+      return new Shape(start, end, interval);
     }
   }
 
@@ -99,7 +100,7 @@ abstract class BaseSpectralDistribution<T> implements ISpectralDistribution<T> {
   sampleAt(wavelength: number, interp: Interpolation): T | null {
     const { start, interval } = this.shape;
     const i = (wavelength - start) / interval;
-    if (interp === Interpolation.nearest) {
+    if (interp === Interpolation.Nearest) {
       return this._samples[Math.round(i)] ?? null;
     } else {
       const i0 = Math.floor(i);
@@ -142,7 +143,7 @@ abstract class BaseSpectralDistribution<T> implements ISpectralDistribution<T> {
   zipWith(
     other: ISpectralDistribution<number | number[]>,
     fun: (a: T, b: number | number[]) => number | number[],
-    interp = Interpolation.linear
+    interp = Interpolation.Linear
   ): ISpectralDistribution<number | number[]> {
     const samples = [];
     let start: number | null = null;

@@ -1,4 +1,4 @@
-export class SpectralShape {
+export class Shape {
   start: number; // wavelength of first sample of distribution [nm]
   end: number; // wavelength of last sample of distribution [nm]
   interval: number; // sample intervale [nm]

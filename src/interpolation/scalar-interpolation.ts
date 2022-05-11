@@ -1,4 +1,4 @@
-import { SpectralShape } from "../spectral-shape";
+import { Shape } from "../spectral-distribution/shape";
 
 function range(start: number, n: number, interval = 1): number[] {
   return Array.from(new Array(n), (_, i) => i * interval + start);
@@ -14,17 +14,17 @@ function powerSeries(x: number, n: number): number[] {
 
 export interface Interpolator<T extends number | number[]> {
   samples: Readonly<Array<T>>;
-  shape: SpectralShape;
+  shape: Shape;
   sampleAt(x: number): T;
 }
 
 abstract class BaseInterpolator implements Interpolator<number> {
   samples: readonly number[];
-  shape: SpectralShape;
+  shape: Shape;
   extrapolatedSamples?: Record<number, number>;
   protected abstract windowSize: number;
 
-  constructor(shape: SpectralShape, samples: readonly number[]) {
+  constructor(shape: Shape, samples: readonly number[]) {
     this.shape = shape;
     this.samples = samples;
   }
@@ -99,7 +99,7 @@ export class Sprague extends BaseInterpolator {
   ];
   private static readonly evalMult = 1 / 24;
 
-  constructor(shape: SpectralShape, samples: readonly number[]) {
+  constructor(shape: Shape, samples: readonly number[]) {
     super(shape, samples);
     this.validate();
     this.extrapolatedSamples = this.extrapolateEnds(samples);

@@ -1,6 +1,6 @@
 import { toBeDeepCloseTo, toMatchCloseTo } from "jest-matcher-deep-close-to";
 import { describe, expect, it } from "vitest";
-import { SpectralShape } from "../spectral-shape";
+import { Shape } from "../spectral-distribution/shape";
 import {
   Interpolator,
   Linear,
@@ -40,7 +40,7 @@ describe("Scalar Interpolator", () => {
   }
 
   describe("NearestNeighbor", () => {
-    const shape = new SpectralShape([0, 3], 1);
+    const shape = new Shape([0, 3], 1);
     const samples = [0, 1, 2, 3];
     const interp = new NearestNeighbor(shape, samples);
     const testValues = [
@@ -54,7 +54,7 @@ describe("Scalar Interpolator", () => {
   });
 
   describe("Linear", () => {
-    const shape = new SpectralShape([0, 3], 0.5);
+    const shape = new Shape([0, 3], 0.5);
     const samples = [0, 1, 2, 3, 4, 5, 6];
     const interp = new Linear(shape, samples);
     const testValues = [
@@ -68,11 +68,9 @@ describe("Scalar Interpolator", () => {
 
   describe("Sprague", () => {
     it("should throw if recieving less than 6 samples", () => {
-      expect(
-        () => new Sprague(new SpectralShape(0, 4, 1), [1, 2, 3, 4, 5])
-      ).toThrow();
+      expect(() => new Sprague(new Shape(0, 4, 1), [1, 2, 3, 4, 5])).toThrow();
     });
-    const shape = new SpectralShape([0, 3.5], 0.5);
+    const shape = new Shape([0, 3.5], 0.5);
     const samples = [5.2, 2.3, 10.2, 13.2, -3.3, 40.8, 56.1, 12.5];
     const interp = new Sprague(shape, samples);
     const testValues = [

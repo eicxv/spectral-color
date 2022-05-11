@@ -1,6 +1,6 @@
-import { CIE_1931_2DEG as cmf31 } from "./distributions/color-matching-functions";
-import { D65 } from "./distributions/illuminants";
-import { ISpectralDistribution } from "./spectral-distribution";
+import { CIE_1931_2DEG as cmf31 } from "./spectral-data/color-matching-functions";
+import { D65 } from "./spectral-data/illuminants";
+import { ISpectralDistribution } from "./spectral-distribution/spectral-distribution";
 
 type Vec3 = [number, number, number];
 

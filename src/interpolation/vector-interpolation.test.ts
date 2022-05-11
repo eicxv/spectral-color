@@ -1,6 +1,6 @@
 import { toBeDeepCloseTo, toMatchCloseTo } from "jest-matcher-deep-close-to";
 import { describe, expect, it } from "vitest";
-import { SpectralShape } from "../spectral-shape";
+import { Shape } from "../spectral-distribution/shape";
 import * as interpolator from "./scalar-interpolation";
 import { Linear, NearestNeighbor, Sprague } from "./vector-interpolation";
 
@@ -13,11 +13,11 @@ function transpose(matrix: number[][]): number[][] {
 describe("Vector Interpolator", () => {
   function testInterpolator(
     VInterp: new (
-      shape: SpectralShape,
+      shape: Shape,
       samples: number[][]
     ) => interpolator.Interpolator<number[]>,
     Interp: new (
-      shape: SpectralShape,
+      shape: Shape,
       samples: number[]
     ) => interpolator.Interpolator<number>
   ): void {
@@ -31,7 +31,7 @@ describe("Vector Interpolator", () => {
       [56.1, 44.2, -6.1],
       [12.5, 1, -12.5],
     ];
-    const shape = new SpectralShape([-0.5, 3], 0.5);
+    const shape = new Shape([-0.5, 3], 0.5);
     const x = [-0.45, 0.34, 1.567, 2.5, 2.3333];
     const vinterp = new VInterp(shape, data);
     const { start, end, interval } = shape;
@@ -75,7 +75,7 @@ describe("Vector Interpolator", () => {
     it("should throw if recieving less than 6 samples", () => {
       expect(
         () =>
-          new Sprague(new SpectralShape(0, 2, 1), [
+          new Sprague(new Shape(0, 2, 1), [
             [1, 2, 3],
             [1, 2, 3],
             [1, 2, 3],
