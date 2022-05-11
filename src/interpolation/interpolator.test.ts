@@ -5,6 +5,7 @@ import {
   IInterpolator,
   LinearInterpolator,
   NearestNeighborInterpolator,
+  SpragueInterpolator,
 } from "./interpolator";
 
 expect.extend({ toBeDeepCloseTo, toMatchCloseTo });
@@ -61,6 +62,40 @@ describe("Interpolator", () => {
       [1.2, 2.4],
       [2.25, 4.5],
       [2.6, 5.2],
+    ] as Array<[number, number]>;
+    testInterpolator(interp, testValues);
+  });
+
+  describe("Sprague", () => {
+    it("should throw if recieving less than 6 samples", () => {
+      expect(
+        () =>
+          new SpragueInterpolator(new SpectralShape(0, 4, 1), [1, 2, 3, 4, 5])
+      ).toThrow();
+    });
+    const shape = new SpectralShape([0, 3.5], 0.5);
+    const samples = [5.2, 2.3, 10.2, 13.2, -3.3, 40.8, 56.1, 12.5];
+    const interp = new SpragueInterpolator(shape, samples);
+    const testValues = [
+      [0.0, 5.2000000000000313],
+      [0.3888888888888889, 2.1150882260003945],
+      [0.77777777777777779, 6.0430281390123843],
+      [1.1666666666666667, 13.00164609053498],
+      [1.5555555555555556, 11.596020818867943],
+      [1.9444444444444444, -4.3716901782135764],
+      [2.3333333333333335, 24.849931412894385],
+      [2.7222222222222223, 54.851709572805518],
+      [3.1111111111111112, 50.361421867271417],
+      [3.5, 12.499999999999989],
+      [0.25, 2.6846179724880392],
+      [0.75, 5.4930678080143531],
+      [1.25, 14.34765625],
+      [1.5, 13.199999999999999],
+      [1.75, 1.5046874999999982],
+      [2.25, 15.47109375],
+      [2.75, 55.968187425239229],
+      [3.25, 39.29649745813397],
+      [3.5, 12.499999999999989],
     ] as Array<[number, number]>;
     testInterpolator(interp, testValues);
   });
