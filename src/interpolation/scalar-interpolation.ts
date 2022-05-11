@@ -1,5 +1,5 @@
 import { Shape } from "../spectral-distribution/shape";
-import { linearCombination, powerSeries, range } from "../utils/utils";
+import { linearCombination, powerSeries, rangeMap } from "../utils/utils";
 
 export interface Interpolator<T extends number | number[]> {
   samples: Readonly<Array<T>>;
@@ -31,8 +31,11 @@ abstract class BaseInterpolator implements Interpolator<number> {
   }
 
   protected window(x0: number): number[] {
-    const indices = range(x0 - (this.windowSize / 2 - 1), this.windowSize);
-    return indices.map((i) => this.samples[i] ?? this.extrapolatedSamples?.[i]);
+    return rangeMap(
+      (i) => this.samples[i] ?? this.extrapolatedSamples?.[i],
+      x0 - (this.windowSize / 2 - 1),
+      this.windowSize
+    );
   }
 
   sampleAt(x: number): number {
