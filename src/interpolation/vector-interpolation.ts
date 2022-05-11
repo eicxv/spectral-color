@@ -36,7 +36,17 @@ function vectorizeInterpolator(
       return new Proxy(arr, handler) as unknown as readonly number[];
     }
 
-    sampleAt(x: number): number[] {
+    sampleAt(x: number[]): number[][];
+    sampleAt(x: number): number[];
+    sampleAt(x: number | number[]): number[] | number[][];
+    sampleAt(x: number | number[]): number[] | number[][] {
+      if (Array.isArray(x)) {
+        return x.map((x) => this._sampleAt(x));
+      }
+      return this._sampleAt(x);
+    }
+
+    _sampleAt(x: number): number[] {
       return this.interpolators.map((interp) => interp.sampleAt(x));
     }
   };

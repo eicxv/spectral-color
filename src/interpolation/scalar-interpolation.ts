@@ -4,7 +4,9 @@ import { linearCombination, powerSeries, rangeMap } from "../utils/utils";
 export interface Interpolator<T extends number | number[]> {
   samples: Readonly<Array<T>>;
   shape: Shape;
+  sampleAt(x: number[]): T[];
   sampleAt(x: number): T;
+  sampleAt(x: number | number[]): T | T[];
 }
 
 abstract class BaseInterpolator implements Interpolator<number> {
@@ -38,7 +40,17 @@ abstract class BaseInterpolator implements Interpolator<number> {
     );
   }
 
-  sampleAt(x: number): number {
+  sampleAt(x: number[]): number[];
+  sampleAt(x: number): number;
+  sampleAt(x: number | number[]): number | number[];
+  sampleAt(x: number | number[]): number | number[] {
+    if (Array.isArray(x)) {
+      return x.map((x) => this._sampleAt(x));
+    }
+    return this._sampleAt(x);
+  }
+
+  _sampleAt(x: number): number {
     x = this.toArrayDomain(x);
     // guard against floating point errors, out of domain already checked
     if (x <= 0) {

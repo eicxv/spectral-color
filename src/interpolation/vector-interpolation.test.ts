@@ -32,7 +32,7 @@ describe("Vector Interpolator", () => {
       [12.5, 1, -12.5],
     ];
     const shape = new Shape([-0.5, 3], 0.5);
-    const x = [-0.45, 0.34, 1.567, 2.5, 2.3333];
+    const xArr = [-0.45, 0.34, 1.567, 2.5, 2.3333];
     const vinterp = new VInterp(shape, data);
     const { start, end, interval } = shape;
     it("should throw if sampling out of domain", () => {
@@ -53,13 +53,15 @@ describe("Vector Interpolator", () => {
       );
     });
 
-    it.each(x)("should match scalar implementation", (x) => {
-      const cols = transpose(data);
-      const interps = cols.map((col) => new Interp(shape, col));
-      function sampleScalarInterps(x: number): number[] {
-        return interps.map((interp) => interp.sampleAt(x));
-      }
-      expect(vinterp.sampleAt(x)).toBeDeepCloseTo(sampleScalarInterps(x), 10);
+    const cols = transpose(data);
+    const interps = cols.map((col) => new Interp(shape, col));
+    it.each(xArr)("should match scalar implementation", (x) => {
+      const y = interps.map((interp) => interp.sampleAt(x));
+      expect(vinterp.sampleAt(x)).toBeDeepCloseTo(y, 10);
+    });
+    it("should match scalar implementation when sampling with array", () => {
+      const y = transpose(interps.map((interp) => interp.sampleAt(xArr)));
+      expect(vinterp.sampleAt(xArr)).toBeDeepCloseTo(y, 10);
     });
   }
 

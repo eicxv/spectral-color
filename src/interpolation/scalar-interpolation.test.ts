@@ -32,10 +32,15 @@ describe("Scalar Interpolator", () => {
         10
       );
     });
-    it("should return interpolated data when sampling at arbitrary points", () => {
+    it("should interpolate data when sampling at arbitrary points", () => {
       testValues.forEach(([x, y]) => {
         expect(interp.sampleAt(x)).toBeCloseTo(y, 10);
       });
+    });
+    it("should return array of interpolated data when sampling with array", () => {
+      const x = testValues.map((e) => e[0]);
+      const y = testValues.map((e) => e[1]);
+      expect(interp.sampleAt(x)).toBeDeepCloseTo(y, 10);
     });
   }
 
