@@ -1,3 +1,4 @@
+import { rangeMap } from "../utils/utils";
 import { Shape } from "./shape";
 
 export enum Interpolation {
@@ -46,6 +47,19 @@ abstract class BaseSpectralDistribution<T> implements ISpectralDistribution<T> {
     );
     this._samples = samplesOrUndef ?? (samplesOrInterval as Array<T>);
     this.validateSampleCount();
+  }
+
+  static fromFunction(
+    f: (x: number) => number | number[],
+    shape: Shape
+  ): ISpectralDistribution<number | number[]> {
+    const n = Math.round((shape.end - shape.start) / shape.interval);
+    const samples = rangeMap(f, shape.start, n, shape.interval);
+    if (Array.isArray(samples[0])) {
+      return new MultiSpectralDistribution(shape, samples as number[][]);
+    } else {
+      return new SpectralDistribution(shape, samples as number[]);
+    }
   }
 
   private validateSampleCount(): void {
