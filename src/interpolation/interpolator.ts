@@ -13,18 +13,18 @@ function powerSeries(x: number, n: number): number[] {
 }
 
 export interface IInterpolator {
-  samples: number[];
+  samples: readonly number[];
   shape: SpectralShape;
   sampleAt(x: number): number;
 }
 
 abstract class BaseInterpolator implements IInterpolator {
-  samples: Array<number>;
+  samples: readonly number[];
   shape: SpectralShape;
   extrapolatedSamples?: Record<number, number>;
   protected abstract windowSize: number;
 
-  constructor(shape: SpectralShape, samples: Array<number>) {
+  constructor(shape: SpectralShape, samples: readonly number[]) {
     this.shape = shape;
     this.samples = samples;
   }
@@ -33,7 +33,7 @@ abstract class BaseInterpolator implements IInterpolator {
 
   protected toArrayDomain(x: number): number {
     const { start, end, interval } = this.shape;
-    if (x < 0 || x > end) {
+    if (x < start || x > end) {
       throw new Error(
         `Cannot interpolate outside domain: x = ${x}, domain = [${start}, ${end}]`
       );
@@ -99,7 +99,7 @@ export class SpragueInterpolator extends BaseInterpolator {
   ];
   private static readonly evalMult = 1 / 24;
 
-  constructor(shape: SpectralShape, samples: Array<number>) {
+  constructor(shape: SpectralShape, samples: readonly number[]) {
     super(shape, samples);
     this.validate();
     this.extrapolatedSamples = this.extrapolateEnds(samples);
@@ -113,7 +113,7 @@ export class SpragueInterpolator extends BaseInterpolator {
     }
   }
 
-  private extrapolateEnds(samples: number[]): Record<number, number> {
+  private extrapolateEnds(samples: readonly number[]): Record<number, number> {
     const n = this.samples.length;
     const first = samples.slice(0, 6);
     const last = samples.slice(n - 6).reverse();
