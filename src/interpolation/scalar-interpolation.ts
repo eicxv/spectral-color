@@ -12,13 +12,13 @@ function powerSeries(x: number, n: number): number[] {
   return Array.from(new Array(n), (_, i) => x ** i);
 }
 
-export interface IInterpolator {
-  samples: readonly number[];
+export interface Interpolator<T extends number | number[]> {
+  samples: Readonly<Array<T>>;
   shape: SpectralShape;
-  sampleAt(x: number): number;
+  sampleAt(x: number): T;
 }
 
-abstract class BaseInterpolator implements IInterpolator {
+abstract class BaseInterpolator implements Interpolator<number> {
   samples: readonly number[];
   shape: SpectralShape;
   extrapolatedSamples?: Record<number, number>;
@@ -64,7 +64,7 @@ abstract class BaseInterpolator implements IInterpolator {
   }
 }
 
-export class NearestNeighborInterpolator extends BaseInterpolator {
+export class NearestNeighbor extends BaseInterpolator {
   windowSize = 2;
 
   protected evaluate(window: number[], t: number): number {
@@ -73,7 +73,7 @@ export class NearestNeighborInterpolator extends BaseInterpolator {
   }
 }
 
-export class LinearInterpolator extends BaseInterpolator {
+export class Linear extends BaseInterpolator {
   windowSize = 2;
 
   protected evaluate(window: number[], t: number): number {
@@ -82,7 +82,7 @@ export class LinearInterpolator extends BaseInterpolator {
   }
 }
 
-export class SpragueInterpolator extends BaseInterpolator {
+export class Sprague extends BaseInterpolator {
   windowSize = 6;
   private static readonly boundaryCoefficients = [
     [884, -1960, 3033, -2648, 1080, -180],
@@ -117,8 +117,8 @@ export class SpragueInterpolator extends BaseInterpolator {
     const n = this.samples.length;
     const first = samples.slice(0, 6);
     const last = samples.slice(n - 6).reverse();
-    const coefficients = SpragueInterpolator.boundaryCoefficients;
-    const mult = SpragueInterpolator.boundaryMult;
+    const coefficients = Sprague.boundaryCoefficients;
+    const mult = Sprague.boundaryMult;
     const ends = {
       [-1]: linComb(first, coefficients[1]) * mult,
       [-2]: linComb(first, coefficients[0]) * mult,
@@ -129,8 +129,8 @@ export class SpragueInterpolator extends BaseInterpolator {
   }
 
   private aCoefficients(window: number[]): number[] {
-    const coefficients = SpragueInterpolator.evalCoefficients;
-    const mult = SpragueInterpolator.evalMult;
+    const coefficients = Sprague.evalCoefficients;
+    const mult = Sprague.evalMult;
     const a = coefficients.map((c) => linComb(c, window) * mult);
     return a;
   }

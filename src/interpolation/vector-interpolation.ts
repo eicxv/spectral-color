@@ -1,27 +1,20 @@
 import { SpectralShape } from "../spectral-shape";
-import {
-  IInterpolator,
-  LinearInterpolator,
-  NearestNeighborInterpolator,
-  SpragueInterpolator,
-} from "./interpolator";
-
-export interface IVectorInterpolator {
-  samples: readonly number[][];
-  shape: SpectralShape;
-  sampleAt(x: number): number[];
-}
+import * as interpolator from "./scalar-interpolation";
 
 function vectorizeInterpolator(
   Interp: new (
     shape: SpectralShape,
     samples: readonly number[]
-  ) => IInterpolator
-): new (shape: SpectralShape, samples: number[][]) => IVectorInterpolator {
-  return class VectorInterpolator implements IVectorInterpolator {
+  ) => interpolator.Interpolator<number>
+): new (shape: SpectralShape, samples: number[][]) => interpolator.Interpolator<
+  number[]
+> {
+  return class VectorInterpolator
+    implements interpolator.Interpolator<number[]>
+  {
     shape: SpectralShape;
     samples: readonly number[][];
-    interpolators: IInterpolator[];
+    interpolators: interpolator.Interpolator<number>[];
     constructor(shape: SpectralShape, samples: number[][]) {
       this.shape = shape;
       this.samples = samples;
@@ -49,10 +42,8 @@ function vectorizeInterpolator(
   };
 }
 
-export const NearestNeighborVectorInterpolator = vectorizeInterpolator(
-  NearestNeighborInterpolator
+export const NearestNeighbor = vectorizeInterpolator(
+  interpolator.NearestNeighbor
 );
-export const LinearVectorInterpolator =
-  vectorizeInterpolator(LinearInterpolator);
-export const SpragueVectorInterpolator =
-  vectorizeInterpolator(SpragueInterpolator);
+export const Linear = vectorizeInterpolator(interpolator.Linear);
+export const Sprague = vectorizeInterpolator(interpolator.Sprague);

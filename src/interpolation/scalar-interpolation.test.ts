@@ -2,17 +2,17 @@ import { toBeDeepCloseTo, toMatchCloseTo } from "jest-matcher-deep-close-to";
 import { describe, expect, it } from "vitest";
 import { SpectralShape } from "../spectral-shape";
 import {
-  IInterpolator,
-  LinearInterpolator,
-  NearestNeighborInterpolator,
-  SpragueInterpolator,
-} from "./interpolator";
+  Interpolator,
+  Linear,
+  NearestNeighbor,
+  Sprague,
+} from "./scalar-interpolation";
 
 expect.extend({ toBeDeepCloseTo, toMatchCloseTo });
 
 describe("Scalar Interpolator", () => {
   function testInterpolator(
-    interp: IInterpolator,
+    interp: Interpolator<number>,
     testValues: Array<[number, number]>
   ): void {
     const { start, end, interval } = interp.shape;
@@ -42,7 +42,7 @@ describe("Scalar Interpolator", () => {
   describe("NearestNeighbor", () => {
     const shape = new SpectralShape([0, 3], 1);
     const samples = [0, 1, 2, 3];
-    const interp = new NearestNeighborInterpolator(shape, samples);
+    const interp = new NearestNeighbor(shape, samples);
     const testValues = [
       [0.4, 0],
       [0.5, 1],
@@ -56,7 +56,7 @@ describe("Scalar Interpolator", () => {
   describe("Linear", () => {
     const shape = new SpectralShape([0, 3], 0.5);
     const samples = [0, 1, 2, 3, 4, 5, 6];
-    const interp = new LinearInterpolator(shape, samples);
+    const interp = new Linear(shape, samples);
     const testValues = [
       [0.4, 0.8],
       [1.2, 2.4],
@@ -69,13 +69,12 @@ describe("Scalar Interpolator", () => {
   describe("Sprague", () => {
     it("should throw if recieving less than 6 samples", () => {
       expect(
-        () =>
-          new SpragueInterpolator(new SpectralShape(0, 4, 1), [1, 2, 3, 4, 5])
+        () => new Sprague(new SpectralShape(0, 4, 1), [1, 2, 3, 4, 5])
       ).toThrow();
     });
     const shape = new SpectralShape([0, 3.5], 0.5);
     const samples = [5.2, 2.3, 10.2, 13.2, -3.3, 40.8, 56.1, 12.5];
-    const interp = new SpragueInterpolator(shape, samples);
+    const interp = new Sprague(shape, samples);
     const testValues = [
       [0.0, 5.2000000000000313],
       [0.25, 2.6846179724880392],

@@ -1,18 +1,8 @@
 import { toBeDeepCloseTo, toMatchCloseTo } from "jest-matcher-deep-close-to";
 import { describe, expect, it } from "vitest";
 import { SpectralShape } from "../spectral-shape";
-import {
-  IInterpolator,
-  LinearInterpolator,
-  NearestNeighborInterpolator,
-  SpragueInterpolator,
-} from "./interpolator";
-import {
-  IVectorInterpolator,
-  LinearVectorInterpolator,
-  NearestNeighborVectorInterpolator,
-  SpragueVectorInterpolator,
-} from "./vector-interpolator";
+import * as interpolator from "./scalar-interpolation";
+import { Linear, NearestNeighbor, Sprague } from "./vector-interpolation";
 
 expect.extend({ toBeDeepCloseTo, toMatchCloseTo });
 
@@ -25,8 +15,11 @@ describe("Vector Interpolator", () => {
     VInterp: new (
       shape: SpectralShape,
       samples: number[][]
-    ) => IVectorInterpolator,
-    Interp: new (shape: SpectralShape, samples: number[]) => IInterpolator
+    ) => interpolator.Interpolator<number[]>,
+    Interp: new (
+      shape: SpectralShape,
+      samples: number[]
+    ) => interpolator.Interpolator<number>
   ): void {
     const data = [
       [5.2, 10.4, 43.2],
@@ -71,27 +64,24 @@ describe("Vector Interpolator", () => {
   }
 
   describe("NearestNeighbor", () => {
-    testInterpolator(
-      NearestNeighborVectorInterpolator,
-      NearestNeighborInterpolator
-    );
+    testInterpolator(NearestNeighbor, interpolator.NearestNeighbor);
   });
 
   describe("Linear", () => {
-    testInterpolator(LinearVectorInterpolator, LinearInterpolator);
+    testInterpolator(Linear, interpolator.Linear);
   });
 
   describe("Sprague", () => {
     it("should throw if recieving less than 6 samples", () => {
       expect(
         () =>
-          new SpragueVectorInterpolator(new SpectralShape(0, 2, 1), [
+          new Sprague(new SpectralShape(0, 2, 1), [
             [1, 2, 3],
             [1, 2, 3],
             [1, 2, 3],
           ])
       ).toThrow();
     });
-    testInterpolator(SpragueVectorInterpolator, SpragueInterpolator);
+    testInterpolator(Sprague, interpolator.Sprague);
   });
 });
