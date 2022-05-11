@@ -22,7 +22,7 @@ abstract class BaseInterpolator implements IInterpolator {
   samples: Array<number>;
   shape: SpectralShape;
   extrapolatedSamples?: Record<number, number>;
-  abstract windowSize: number;
+  protected abstract windowSize: number;
 
   constructor(shape: SpectralShape, samples: Array<number>) {
     this.shape = shape;
@@ -31,7 +31,7 @@ abstract class BaseInterpolator implements IInterpolator {
 
   protected abstract evaluate(window: number[], t: number): number;
 
-  protected toShape(x: number): number {
+  protected toArrayDomain(x: number): number {
     const { start, end, interval } = this.shape;
     if (x < 0 || x > end) {
       throw new Error(
@@ -41,8 +41,13 @@ abstract class BaseInterpolator implements IInterpolator {
     return (x - start) / interval;
   }
 
+  protected window(x0: number): number[] {
+    const indices = range(x0 - (this.windowSize / 2 - 1), this.windowSize);
+    return indices.map((i) => this.samples[i] ?? this.extrapolatedSamples?.[i]);
+  }
+
   sampleAt(x: number): number {
-    x = this.toShape(x);
+    x = this.toArrayDomain(x);
     // guard against floating point errors, out of domain already checked
     if (x <= 0) {
       return this.samples[0];
@@ -53,11 +58,9 @@ abstract class BaseInterpolator implements IInterpolator {
 
     const x0 = Math.floor(x);
     const t = x - x0;
-    const indices = range(x0 - (this.windowSize / 2 - 1), this.windowSize);
-    const window = indices.map(
-      (i) => this.samples[i] ?? this.extrapolatedSamples?.[i]
-    );
-    return this.evaluate(window, t);
+
+    const w = this.window(x0);
+    return this.evaluate(w, t);
   }
 }
 
@@ -81,12 +84,12 @@ export class LinearInterpolator extends BaseInterpolator {
 
 export class SpragueInterpolator extends BaseInterpolator {
   windowSize = 6;
-  static readonly boundaryCoefficients = [
+  private static readonly boundaryCoefficients = [
     [884, -1960, 3033, -2648, 1080, -180],
     [508, -540, 488, -367, 144, -24],
   ];
-  static readonly boundaryMult = 1 / 209;
-  static readonly evalCoefficients = [
+  private static readonly boundaryMult = 1 / 209;
+  private static readonly evalCoefficients = [
     [0, 0, 24, 0, 0, 0],
     [2, -16, 0, 16, -2, 0],
     [-1, 16, -30, 16, -1, 0],
@@ -94,7 +97,7 @@ export class SpragueInterpolator extends BaseInterpolator {
     [13, -64, 126, -124, 61, -12],
     [-5, 25, -50, 50, -25, 5],
   ];
-  static readonly evalMult = 1 / 24;
+  private static readonly evalMult = 1 / 24;
 
   constructor(shape: SpectralShape, samples: Array<number>) {
     super(shape, samples);
