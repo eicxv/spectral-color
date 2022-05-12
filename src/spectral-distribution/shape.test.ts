@@ -11,6 +11,7 @@ describe("SpectralShape", () => {
       expect(s.start).toBe(0);
       expect(s.end).toBe(10);
       expect(s.interval).toBe(1);
+      expect(s.span).toEqual([0, 10]);
     });
 
     it("should construct with start and end", () => {
@@ -18,6 +19,7 @@ describe("SpectralShape", () => {
       expect(s.start).toBe(-3);
       expect(s.end).toBe(15);
       expect(s.interval).toBe(0.3);
+      expect(s.span).toEqual([-3, 15]);
     });
   });
 
@@ -53,6 +55,14 @@ describe("SpectralShape", () => {
       expect(s.isInDomain(0)).toBe(true);
       expect(s.isInDomain(5)).toBe(true);
       expect(s.isInDomain(9)).toBe(true);
+    });
+  });
+
+  describe("sampleCount", () => {
+    it("calculates correct count", () => {
+      expect(new Shape(-1.5, 9, 0.5).sampleCount()).toBe(22);
+      expect(new Shape(-3, -2, 0.5).sampleCount()).toBe(3);
+      expect(new Shape(0, 1, 0.1).sampleCount()).toBe(11);
     });
   });
 });

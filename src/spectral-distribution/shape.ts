@@ -25,6 +25,10 @@ export class Shape {
     return [this.start, this.end];
   }
 
+  sampleCount(): number {
+    return Math.round((this.end - this.start) / this.interval) + 1;
+  }
+
   isInDomain(x: number): boolean {
     return x >= this.start && x <= this.end;
   }

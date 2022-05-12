@@ -62,9 +62,9 @@ abstract class BaseSpectralDistribution<T extends number | number[]>
   }
 
   private validateSampleCount(): void {
-    const { start, end, interval } = this.shape;
-    const sampleCount = this._samples.length;
-    if (Math.round((end - start) / interval) !== sampleCount - 1) {
+    const n = this._samples.length;
+    const expected = this.shape.sampleCount();
+    if (n !== expected) {
       throw new Error("Sample count does not match shape");
     }
   }
