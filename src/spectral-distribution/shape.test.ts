@@ -39,4 +39,20 @@ describe("SpectralShape", () => {
       expect(() => new Shape(2, 5, -0.1)).toThrow();
     });
   });
+
+  describe("isInDomain", () => {
+    it("is false outside domain", () => {
+      const s = new Shape(-1.5, 9, 0.5);
+      expect(s.isInDomain(-2)).toBe(false);
+      expect(s.isInDomain(11)).toBe(false);
+    });
+
+    it("is true inside domain", () => {
+      const s = new Shape(-1.5, 9, 0.5);
+      expect(s.isInDomain(-1.5)).toBe(true);
+      expect(s.isInDomain(0)).toBe(true);
+      expect(s.isInDomain(5)).toBe(true);
+      expect(s.isInDomain(9)).toBe(true);
+    });
+  });
 });

@@ -25,6 +25,10 @@ export class Shape {
     return [this.start, this.end];
   }
 
+  isInDomain(x: number): boolean {
+    return x >= this.start && x <= this.end;
+  }
+
   private validate(): void {
     if (this.start > this.end) {
       throw new Error(
