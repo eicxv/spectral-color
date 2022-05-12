@@ -48,19 +48,6 @@ abstract class BaseSpectralDistribution<T extends number | number[]>
     this.validateSampleCount();
   }
 
-  static fromFunction(
-    f: (x: number) => number | number[],
-    shape: Shape
-  ): ISpectralDistribution<number | number[]> {
-    const n = Math.round((shape.end - shape.start) / shape.interval);
-    const samples = rangeMap(f, shape.start, n, shape.interval);
-    if (Array.isArray(samples[0])) {
-      return new MultiSpectralDistribution(shape, samples as number[][]);
-    } else {
-      return new SpectralDistribution(shape, samples as number[]);
-    }
-  }
-
   private validateSampleCount(): void {
     const n = this._samples.length;
     const expected = this.shape.sampleCount();
@@ -181,14 +168,19 @@ abstract class BaseSpectralDistribution<T extends number | number[]>
 export class SpectralDistribution extends BaseSpectralDistribution<number> {
   interpolator = new interp.Sprague(this.shape, this._samples);
 
-  protected lerp(a: number, b: number, t: number): number {
-    return a + t * (b - a);
-  }
-
   sum(): number {
     const samples = this._samples as number[];
     const reducer = (acc: number, v: number): number => acc + v;
     return samples.reduce(reducer, 0);
+  }
+
+  static fromFunction(
+    f: (x: number) => number,
+    shape: Shape
+  ): SpectralDistribution {
+    const n = Math.round((shape.end - shape.start) / shape.interval);
+    const samples = rangeMap(f, shape.start, n, shape.interval);
+    return new SpectralDistribution(shape, samples as number[]);
   }
 }
 
@@ -197,14 +189,19 @@ export class MultiSpectralDistribution extends BaseSpectralDistribution<
 > {
   interpolator = new vectorInterp.Sprague(this.shape, this._samples);
 
-  protected lerp(a: number[], b: number[], t: number): number[] {
-    return a.map((a_, i) => a_ + t * (b[i] - a_));
-  }
-
   sum(): number[] {
     const samples = this._samples as number[][];
     const reducer = (acc: number[], v: number[]): number[] =>
       acc.map((a, i) => a + v[i]);
     return samples.reduce(reducer, Array(this._samples[0].length).fill(0));
+  }
+
+  static fromFunction(
+    f: (x: number) => number[],
+    shape: Shape
+  ): MultiSpectralDistribution {
+    const n = Math.round((shape.end - shape.start) / shape.interval);
+    const samples = rangeMap(f, shape.start, n, shape.interval);
+    return new MultiSpectralDistribution(shape, samples as number[][]);
   }
 }
