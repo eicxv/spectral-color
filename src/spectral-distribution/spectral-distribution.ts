@@ -1,35 +1,34 @@
+import * as interp from "../interpolation/scalar-interpolation";
+import * as vectorInterp from "../interpolation/vector-interpolation";
 import { rangeMap } from "../utils/utils";
 import { Shape } from "./shape";
-
-export enum Interpolation {
-  Linear,
-  Nearest,
-  Sprague,
-}
 
 export interface ISpectralDistribution<T> {
   shape: Shape;
   [Symbol.iterator](): IterableIterator<[number, T]>;
   wavelengths(): IterableIterator<number>;
   samples(): IterableIterator<T>;
-  sampleAt(wavelength: number, interp: Interpolation): T | null;
+  sampleAt(wavelength: number): T;
+  sampleAt(wavelength: number[]): T[];
+  sampleAt(wavelength: number | number[]): T | T[];
   sum(): T;
   zipWith<OtherT>(
     other: ISpectralDistribution<OtherT>,
-    fun: (a: T, b: OtherT) => number,
-    interp?: Interpolation
+    fun: (a: T, b: OtherT) => number
   ): ISpectralDistribution<number>;
   zipWith<OtherT>(
     other: ISpectralDistribution<OtherT>,
-    fun: (a: T, b: OtherT) => number[],
-    interp?: Interpolation
+    fun: (a: T, b: OtherT) => number[]
   ): ISpectralDistribution<number[]>;
   map(fun: (a: T) => number): ISpectralDistribution<number>;
   map(fun: (a: T) => number[]): ISpectralDistribution<number[]>;
 }
 
-abstract class BaseSpectralDistribution<T> implements ISpectralDistribution<T> {
+abstract class BaseSpectralDistribution<T extends number | number[]>
+  implements ISpectralDistribution<T>
+{
   shape: Shape;
+  protected abstract interpolator: interp.Interpolator<T>;
   protected _samples: Array<T>;
 
   constructor(shape: Shape, samples: Array<T>);
@@ -105,27 +104,21 @@ abstract class BaseSpectralDistribution<T> implements ISpectralDistribution<T> {
     }
   }
 
+  setInterpolator(
+    Interpolator: new (shape: Shape, samples: T[]) => interp.Interpolator<T>
+  ): void {
+    this.interpolator = new Interpolator(this.shape, this._samples);
+  }
+
   samples(): IterableIterator<T> {
     return this._samples[Symbol.iterator]();
   }
 
-  protected abstract lerp(a: T, b: T, t: number): T;
-
-  sampleAt(wavelength: number, interp: Interpolation): T | null {
-    const { start, interval } = this.shape;
-    const i = (wavelength - start) / interval;
-    if (interp === Interpolation.Nearest) {
-      return this._samples[Math.round(i)] ?? null;
-    } else {
-      const i0 = Math.floor(i);
-      const t = i - i0;
-      const v0 = this._samples[i0];
-      const v1 = this._samples[Math.ceil(i)];
-      if (v0 !== undefined && v1 !== undefined) {
-        return this.lerp(v0, v1, t);
-      }
-      return v0 ?? v1 ?? null;
-    }
+  sampleAt(wavelength: number): T;
+  sampleAt(wavelength: number[]): T[];
+  sampleAt(wavelength: number | number[]): T | T[];
+  sampleAt(wavelength: number | number[]): T | T[] {
+    return this.interpolator.sampleAt(wavelength);
   }
 
   protected createNew(
@@ -146,35 +139,31 @@ abstract class BaseSpectralDistribution<T> implements ISpectralDistribution<T> {
 
   zipWith<OtherT>(
     other: ISpectralDistribution<OtherT>,
-    fun: (a: T, b: OtherT) => number,
-    interp?: Interpolation
+    fun: (a: T, b: OtherT) => number
   ): ISpectralDistribution<number>;
   zipWith<OtherT>(
     other: ISpectralDistribution<OtherT>,
-    fun: (a: T, b: OtherT) => number[],
-    interp?: Interpolation
+    fun: (a: T, b: OtherT) => number[]
   ): ISpectralDistribution<number[]>;
   zipWith(
     other: ISpectralDistribution<number | number[]>,
-    fun: (a: T, b: number | number[]) => number | number[],
-    interp = Interpolation.Linear
+    fun: (a: T, b: number | number[]) => number | number[]
   ): ISpectralDistribution<number | number[]> {
-    const samples = [];
-    let start: number | null = null;
-    let end = 0;
-    for (const [wl, v1] of this) {
-      const v2 = other.sampleAt(wl, interp);
-      if (v2 === null) {
-        continue;
-      }
-      start ??= wl;
-      end = wl;
-      samples.push(fun(v1, v2));
-    }
-    if (start === null) {
+    let wl = [...this.wavelengths()];
+    wl = wl.filter(other.shape.isInDomain.bind(other.shape));
+    if (wl.length === 0) {
       throw new Error("Degenerate spectrum");
     }
-    return this.createNew([start, end], this.shape.interval, samples);
+    const samples = wl.map((wavelength) => {
+      const a = this.sampleAt(wavelength);
+      const b = other.sampleAt(wavelength);
+      return fun(a, b);
+    });
+    return this.createNew(
+      [wl[0], wl[wl.length - 1]],
+      this.shape.interval,
+      samples
+    );
   }
 
   map(f: (v: T) => number): ISpectralDistribution<number>;
@@ -190,6 +179,8 @@ abstract class BaseSpectralDistribution<T> implements ISpectralDistribution<T> {
 }
 
 export class SpectralDistribution extends BaseSpectralDistribution<number> {
+  interpolator = new interp.Sprague(this.shape, this._samples);
+
   protected lerp(a: number, b: number, t: number): number {
     return a + t * (b - a);
   }
@@ -204,6 +195,8 @@ export class SpectralDistribution extends BaseSpectralDistribution<number> {
 export class MultiSpectralDistribution extends BaseSpectralDistribution<
   number[]
 > {
+  interpolator = new vectorInterp.Sprague(this.shape, this._samples);
+
   protected lerp(a: number[], b: number[], t: number): number[] {
     return a.map((a_, i) => a_ + t * (b[i] - a_));
   }

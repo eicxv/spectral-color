@@ -34,8 +34,8 @@ describe("SpectralDistribution", () => {
     // eslint-disable-next-line  @typescript-eslint/no-explicit-any
     const context = {} as any;
     beforeEach(() => {
-      context.samples = [-4, 0, 3, 2];
-      context.wavelengths = [5, 15, 25, 35];
+      context.samples = [-4, 0, 3, 2, -2, 4];
+      context.wavelengths = [5, 15, 25, 35, 45, 55];
       context.sd = new SpectralDistribution(5, 10, context.samples.slice());
     });
 
