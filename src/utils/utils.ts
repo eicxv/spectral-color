@@ -18,3 +18,7 @@ export function linearCombination(a: number[], b: number[]): number {
 export function powerSeries(x: number, n: number): number[] {
   return Array.from(new Array(n), (_, i) => x ** i);
 }
+
+export function transpose(matrix: number[][]): number[][] {
+  return matrix[0].map((_, i) => matrix.map((row) => row[i]));
+}
