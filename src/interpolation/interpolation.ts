@@ -1,6 +1,6 @@
 import { Shape } from "../spectral-distribution/shape";
 import { rangeMap } from "../utils/utils";
-import { ExtrapolatorType } from "./extrapolation";
+import { ExtrapolatorType } from "./boundary-extrapolation";
 
 export interface Interpolator<T extends number | number[]> {
   samples: Readonly<Array<T>>;
