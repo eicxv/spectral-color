@@ -1,25 +1,17 @@
 import { toBeDeepCloseTo, toMatchCloseTo } from "jest-matcher-deep-close-to";
 import { describe, expect, it } from "vitest";
 import { Shape } from "../spectral-distribution/shape";
+import { transpose } from "./../utils/utils";
+import { Interpolator } from "./interpolation";
 import * as interpolator from "./scalar-interpolation";
 import { Linear, NearestNeighbor, Sprague } from "./vector-interpolation";
 
 expect.extend({ toBeDeepCloseTo, toMatchCloseTo });
 
-function transpose(matrix: number[][]): number[][] {
-  return matrix[0].map((_, i) => matrix.map((row) => row[i]));
-}
-
 describe("Vector Interpolator", () => {
   function testInterpolator(
-    VInterp: new (
-      shape: Shape,
-      samples: number[][]
-    ) => interpolator.Interpolator<number[]>,
-    Interp: new (
-      shape: Shape,
-      samples: number[]
-    ) => interpolator.Interpolator<number>
+    VInterp: new (shape: Shape, samples: number[][]) => Interpolator<number[]>,
+    Interp: new (shape: Shape, samples: number[]) => Interpolator<number>
   ): void {
     const data = [
       [5.2, 10.4, 43.2],

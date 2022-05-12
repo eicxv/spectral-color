@@ -1,12 +1,8 @@
 import { toBeDeepCloseTo, toMatchCloseTo } from "jest-matcher-deep-close-to";
 import { describe, expect, it } from "vitest";
 import { Shape } from "../spectral-distribution/shape";
-import {
-  Interpolator,
-  Linear,
-  NearestNeighbor,
-  Sprague,
-} from "./scalar-interpolation";
+import { Interpolator } from "./interpolation";
+import { Linear, NearestNeighbor, Sprague } from "./scalar-interpolation";
 
 expect.extend({ toBeDeepCloseTo, toMatchCloseTo });
 

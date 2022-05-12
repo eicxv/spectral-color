@@ -1,3 +1,4 @@
+import { Interpolator } from "../interpolation/interpolation";
 import * as interp from "../interpolation/scalar-interpolation";
 import * as vectorInterp from "../interpolation/vector-interpolation";
 import { rangeMap } from "../utils/utils";
@@ -28,7 +29,7 @@ abstract class BaseSpectralDistribution<T extends number | number[]>
   implements ISpectralDistribution<T>
 {
   shape: Shape;
-  protected abstract interpolator: interp.Interpolator<T>;
+  protected abstract interpolator: Interpolator<T>;
   protected _samples: Array<T>;
 
   constructor(shape: Shape, samples: Array<T>);
@@ -92,7 +93,7 @@ abstract class BaseSpectralDistribution<T extends number | number[]>
   }
 
   setInterpolator(
-    Interpolator: new (shape: Shape, samples: T[]) => interp.Interpolator<T>
+    Interpolator: new (shape: Shape, samples: T[]) => Interpolator<T>
   ): void {
     this.interpolator = new Interpolator(this.shape, this._samples);
   }
