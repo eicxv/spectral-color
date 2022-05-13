@@ -1,6 +1,5 @@
 import { toBeDeepCloseTo, toMatchCloseTo } from "jest-matcher-deep-close-to";
 import { describe, expect, it } from "vitest";
-import { Shape } from "../spectral-distribution/shape";
 import { transpose } from "./../utils/utils";
 import { Interpolator } from "./interpolation";
 import * as interpolator from "./scalar-interpolation";
@@ -10,8 +9,8 @@ expect.extend({ toBeDeepCloseTo, toMatchCloseTo });
 
 describe("Vector Interpolator", () => {
   function testInterpolator(
-    VInterp: new (shape: Shape, samples: number[][]) => Interpolator<number[]>,
-    Interp: new (shape: Shape, samples: number[]) => Interpolator<number>
+    VInterp: new (samples: number[][]) => Interpolator<number[]>,
+    Interp: new (samples: number[]) => Interpolator<number>
   ): void {
     const data = [
       [5.2, 10.4, 43.2],
@@ -23,10 +22,10 @@ describe("Vector Interpolator", () => {
       [56.1, 44.2, -6.1],
       [12.5, 1, -12.5],
     ];
-    const shape = new Shape([-0.5, 3], 0.5);
-    const xArr = [-0.45, 0.34, 1.567, 2.5, 2.3333];
-    const vinterp = new VInterp(shape, data);
-    const { start, end, interval } = shape;
+    const xArr = [0.05, 0.34, 1.567, 2.5, 2.3333];
+    const start = 0;
+    const end = data.length - 1;
+    const vinterp = new VInterp(data);
     it("should throw if sampling out of domain", () => {
       expect(() => vinterp.sampleAt(start - 1)).toThrow();
       expect(() => vinterp.sampleAt(end + 1)).toThrow();
@@ -35,7 +34,7 @@ describe("Vector Interpolator", () => {
 
     it("should return original data when sampling at intervals", () => {
       expect(vinterp.sampleAt(start)).toBeDeepCloseTo(vinterp.samples[0], 10);
-      expect(vinterp.sampleAt(start + interval)).toBeDeepCloseTo(
+      expect(vinterp.sampleAt(start + 1)).toBeDeepCloseTo(
         vinterp.samples[1],
         10
       );
@@ -46,7 +45,7 @@ describe("Vector Interpolator", () => {
     });
 
     const cols = transpose(data);
-    const interps = cols.map((col) => new Interp(shape, col));
+    const interps = cols.map((col) => new Interp(col));
     it.each(xArr)("should match scalar implementation", (x) => {
       const y = interps.map((interp) => interp.sampleAt(x));
       expect(vinterp.sampleAt(x)).toBeDeepCloseTo(y, 10);
@@ -69,7 +68,7 @@ describe("Vector Interpolator", () => {
     it("should throw if recieving less than 6 samples", () => {
       expect(
         () =>
-          new Sprague(new Shape(0, 2, 1), [
+          new Sprague([
             [1, 2, 3],
             [1, 2, 3],
             [1, 2, 3],

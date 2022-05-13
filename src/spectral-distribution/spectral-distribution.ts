@@ -96,10 +96,8 @@ abstract class BaseSpectralDistribution<T extends number | number[]>
     }
   }
 
-  setInterpolator(
-    Interpolator: new (shape: Shape, samples: T[]) => Interpolator<T>
-  ): void {
-    this.interpolator = new Interpolator(this.shape, this._samples);
+  setInterpolator(Interpolator: new (samples: T[]) => Interpolator<T>): void {
+    this.interpolator = new Interpolator(this._samples);
   }
 
   samples(): IterableIterator<T> {
@@ -107,11 +105,11 @@ abstract class BaseSpectralDistribution<T extends number | number[]>
   }
 
   private _sampleAt(wavelength: number): T {
-    if (this.shape.isInDomain(wavelength)) {
-      return this.interpolator.sampleAt(wavelength);
+    const { start, interval } = this.shape;
+    const arrDomain = (wavelength - start) / interval;
+    if (arrDomain >= 0 && arrDomain <= this._samples.length - 1) {
+      return this.interpolator.sampleAt(arrDomain);
     } else {
-      const { start, interval } = this.shape;
-      const arrDomain = (wavelength - start) / interval;
       return this.extrapolate(arrDomain, this._samples);
     }
   }
@@ -184,7 +182,7 @@ abstract class BaseSpectralDistribution<T extends number | number[]>
 }
 
 export class SpectralDistribution extends BaseSpectralDistribution<number> {
-  interpolator = new interp.Sprague(this.shape, this._samples);
+  interpolator = new interp.Sprague(this._samples);
   extrapolate = nearestExtrapolator;
 
   sum(): number {
@@ -205,7 +203,7 @@ export class SpectralDistribution extends BaseSpectralDistribution<number> {
 export class MultiSpectralDistribution extends BaseSpectralDistribution<
   number[]
 > {
-  interpolator = new vectorInterp.Sprague(this.shape, this._samples);
+  interpolator = new vectorInterp.Sprague(this._samples);
   extrapolate = nearestExtrapolator;
 
   sum(): number[] {

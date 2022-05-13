@@ -1,19 +1,16 @@
-import { Shape } from "../spectral-distribution/shape";
 import { Interpolator } from "./interpolation";
 import * as interpolator from "./scalar-interpolation";
 
 function vectorizeInterpolator(
-  Interp: new (shape: Shape, samples: readonly number[]) => Interpolator<number>
-): new (shape: Shape, samples: number[][]) => Interpolator<number[]> {
+  Interp: new (samples: readonly number[]) => Interpolator<number>
+): new (samples: number[][]) => Interpolator<number[]> {
   return class VectorInterpolator implements Interpolator<number[]> {
-    shape: Shape;
     samples: readonly number[][];
     interpolators: Interpolator<number>[];
-    constructor(shape: Shape, samples: number[][]) {
-      this.shape = shape;
+    constructor(samples: number[][]) {
       this.samples = samples;
       this.interpolators = samples[0].map(
-        (_, i) => new Interp(shape, this.createProxy(samples, i))
+        (_, i) => new Interp(this.createProxy(samples, i))
       );
     }
 

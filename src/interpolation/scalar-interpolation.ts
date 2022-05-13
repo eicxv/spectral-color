@@ -1,4 +1,3 @@
-import { Shape } from "../spectral-distribution/shape";
 import { linearCombination, powerSeries } from "../utils/utils";
 import { createExtrapolator, ExtrapolatorType } from "./boundary-extrapolation";
 import { BaseInterpolator } from "./interpolation";
@@ -50,8 +49,8 @@ export class Sprague extends BaseInterpolator {
   ];
   private static readonly mult = 1 / 24;
 
-  constructor(shape: Shape, samples: readonly number[]) {
-    super(shape, samples);
+  constructor(samples: readonly number[]) {
+    super(samples);
     this.validate();
     this.extrapolatedSamples = createExtrapolator(
       this.samples,

@@ -1,10 +1,8 @@
-import { Shape } from "../spectral-distribution/shape";
 import { mapRange } from "../utils/utils";
 import { ExtrapolatorType } from "./boundary-extrapolation";
 
 export interface Interpolator<T extends number | number[]> {
   samples: readonly T[];
-  shape: Shape;
   sampleAt(x: number[]): T[];
   sampleAt(x: number): T;
   sampleAt(x: number | number[]): T | T[];
@@ -12,26 +10,14 @@ export interface Interpolator<T extends number | number[]> {
 
 export abstract class BaseInterpolator implements Interpolator<number> {
   samples: readonly number[];
-  shape: Shape;
   extrapolatedSamples?: ExtrapolatorType;
   protected abstract windowSize: number;
 
-  constructor(shape: Shape, samples: readonly number[]) {
-    this.shape = shape;
+  constructor(samples: readonly number[]) {
     this.samples = samples;
   }
 
   protected abstract evaluate(window: number[], t: number): number;
-
-  protected toArrayDomain(x: number): number {
-    const { start, end, interval } = this.shape;
-    if (x < start || x > end) {
-      throw new Error(
-        `Cannot interpolate outside domain: x = ${x}, domain = [${start}, ${end}]`
-      );
-    }
-    return (x - start) / interval;
-  }
 
   protected window(x0: number): number[] {
     return mapRange(
@@ -52,8 +38,13 @@ export abstract class BaseInterpolator implements Interpolator<number> {
   }
 
   _sampleAt(x: number): number {
-    x = this.toArrayDomain(x);
-    // guard against floating point errors, out of domain already checked
+    if (x < 0 || x > this.samples.length - 1) {
+      throw new Error(
+        `Cannot interpolate outside domain: x = ${x}, domain = [0, ${
+          this.samples.length - 1
+        }]`
+      );
+    }
     if (x <= 0) {
       return this.samples[0];
     }
