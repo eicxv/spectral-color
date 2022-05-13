@@ -1,3 +1,4 @@
+import { nearestExtrapolator } from "../extrapolation/extrapolation";
 import { Interpolator } from "../interpolation/interpolation";
 import * as interp from "../interpolation/scalar-interpolation";
 import * as vectorInterp from "../interpolation/vector-interpolation";
@@ -29,6 +30,10 @@ abstract class BaseSpectralDistribution<T extends number | number[]>
 {
   shape: Shape;
   protected abstract interpolator: Interpolator<T>;
+  protected abstract extrapolate: (
+    wavelength: number,
+    sample: readonly T[]
+  ) => T;
   protected _samples: Array<T>;
 
   constructor(shape: Shape, samples: Array<T>);
@@ -101,11 +106,24 @@ abstract class BaseSpectralDistribution<T extends number | number[]>
     return this._samples[Symbol.iterator]();
   }
 
+  private _sampleAt(wavelength: number): T {
+    if (this.shape.isInDomain(wavelength)) {
+      return this.interpolator.sampleAt(wavelength);
+    } else {
+      const { start, interval } = this.shape;
+      const arrDomain = (wavelength - start) / interval;
+      return this.extrapolate(arrDomain, this._samples);
+    }
+  }
+
   sampleAt(wavelength: number): T;
   sampleAt(wavelength: number[]): T[];
   sampleAt(wavelength: number | number[]): T | T[];
   sampleAt(wavelength: number | number[]): T | T[] {
-    return this.interpolator.sampleAt(wavelength);
+    if (Array.isArray(wavelength)) {
+      return wavelength.map(this._sampleAt.bind(this));
+    }
+    return this._sampleAt(wavelength);
   }
 
   protected createNew(
@@ -167,6 +185,7 @@ abstract class BaseSpectralDistribution<T extends number | number[]>
 
 export class SpectralDistribution extends BaseSpectralDistribution<number> {
   interpolator = new interp.Sprague(this.shape, this._samples);
+  extrapolate = nearestExtrapolator;
 
   sum(): number {
     const samples = this._samples as number[];
@@ -187,6 +206,7 @@ export class MultiSpectralDistribution extends BaseSpectralDistribution<
   number[]
 > {
   interpolator = new vectorInterp.Sprague(this.shape, this._samples);
+  extrapolate = nearestExtrapolator;
 
   sum(): number[] {
     const samples = this._samples as number[][];

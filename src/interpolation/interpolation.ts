@@ -3,7 +3,7 @@ import { mapRange } from "../utils/utils";
 import { ExtrapolatorType } from "./boundary-extrapolation";
 
 export interface Interpolator<T extends number | number[]> {
-  samples: Readonly<Array<T>>;
+  samples: readonly T[];
   shape: Shape;
   sampleAt(x: number[]): T[];
   sampleAt(x: number): T;

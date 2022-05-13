@@ -30,6 +30,28 @@ describe("SpectralDistribution", () => {
     });
   });
 
+  describe("sampleAt", () => {
+    let sd: SpectralDistribution;
+    const samples = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    beforeEach(() => {
+      sd = new SpectralDistribution([0, 1], 0.1, samples);
+    });
+    it("should return original data at intervals", () => {
+      expect(
+        sd.sampleAt([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1])
+      ).toBeDeepCloseTo(samples);
+      expect(sd.sampleAt(0.1)).toBeDeepCloseTo(1);
+    });
+    it("should interpolate", () => {
+      expect(sd.sampleAt([0.05, 0.15])).toBeDeepCloseTo([0.5, 1.5]);
+      expect(sd.sampleAt(0.05)).toBeDeepCloseTo(0.5);
+    });
+    it("should extrapolate", () => {
+      expect(sd.sampleAt([-0.05, 1.5])).toBeDeepCloseTo([0, 10]);
+      expect(sd.sampleAt(-1)).toBeDeepCloseTo(0);
+    });
+  });
+
   describe("iterators", () => {
     // eslint-disable-next-line  @typescript-eslint/no-explicit-any
     const context = {} as any;
