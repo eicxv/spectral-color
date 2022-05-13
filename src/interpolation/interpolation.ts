@@ -1,5 +1,5 @@
 import { Shape } from "../spectral-distribution/shape";
-import { rangeMap } from "../utils/utils";
+import { mapRange } from "../utils/utils";
 import { ExtrapolatorType } from "./boundary-extrapolation";
 
 export interface Interpolator<T extends number | number[]> {
@@ -34,7 +34,7 @@ export abstract class BaseInterpolator implements Interpolator<number> {
   }
 
   protected window(x0: number): number[] {
-    return rangeMap(
+    return mapRange(
       (i) => this.samples[i] ?? this.extrapolatedSamples?.[i],
       x0 - (this.windowSize / 2 - 1),
       this.windowSize

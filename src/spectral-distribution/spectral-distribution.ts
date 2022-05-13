@@ -1,7 +1,6 @@
 import { Interpolator } from "../interpolation/interpolation";
 import * as interp from "../interpolation/scalar-interpolation";
 import * as vectorInterp from "../interpolation/vector-interpolation";
-import { rangeMap } from "../utils/utils";
 import { Shape } from "./shape";
 
 export interface ISpectralDistribution<T> {
@@ -179,9 +178,8 @@ export class SpectralDistribution extends BaseSpectralDistribution<number> {
     f: (x: number) => number,
     shape: Shape
   ): SpectralDistribution {
-    const n = Math.round((shape.end - shape.start) / shape.interval);
-    const samples = rangeMap(f, shape.start, n, shape.interval);
-    return new SpectralDistribution(shape, samples as number[]);
+    const samples = shape.mapWavelengths(f);
+    return new SpectralDistribution(shape, samples);
   }
 }
 
@@ -201,8 +199,7 @@ export class MultiSpectralDistribution extends BaseSpectralDistribution<
     f: (x: number) => number[],
     shape: Shape
   ): MultiSpectralDistribution {
-    const n = Math.round((shape.end - shape.start) / shape.interval);
-    const samples = rangeMap(f, shape.start, n, shape.interval);
-    return new MultiSpectralDistribution(shape, samples as number[][]);
+    const samples = shape.mapWavelengths(f);
+    return new MultiSpectralDistribution(shape, samples);
   }
 }

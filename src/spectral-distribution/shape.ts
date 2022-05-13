@@ -1,7 +1,9 @@
+import { mapRange, range } from "../utils/utils";
+
 export class Shape {
   start: number; // wavelength of first sample of distribution [nm]
   end: number; // wavelength of last sample of distribution [nm]
-  interval: number; // sample intervale [nm]
+  interval: number; // sample interval [nm]
   constructor(start: number, end: number, interval: number);
   constructor(span: [number, number], interval: number);
   constructor(
@@ -25,6 +27,20 @@ export class Shape {
     return [this.start, this.end];
   }
 
+  *[Symbol.iterator](): IterableIterator<number> {
+    for (let i = 0; i < this.sampleCount(); i++) {
+      yield this.start + i * this.interval;
+    }
+  }
+
+  wavelengths(): number[] {
+    return range(this.start, this.sampleCount(), this.interval);
+  }
+
+  mapWavelengths<T>(f: (wl: number) => T): T[] {
+    return mapRange(f, this.start, this.sampleCount(), this.interval);
+  }
+
   sampleCount(): number {
     return Math.round((this.end - this.start) / this.interval) + 1;
   }
@@ -39,7 +55,7 @@ export class Shape {
         `End wavelength ${this.end} must be equal or larger than start wavelength ${this.start}`
       );
     }
-    if (this.interval <= 0) {
+    if (this.interval <= 0 && this.start !== this.end) {
       throw new Error(`Interval ${this.interval} must be larger than zero`);
     }
     const remainder = (this.end - this.start) % this.interval;

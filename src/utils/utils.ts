@@ -2,7 +2,7 @@ export function range(start: number, n: number, interval = 1): number[] {
   return Array.from(new Array(n), (_, i) => i * interval + start);
 }
 
-export function rangeMap<T>(
+export function mapRange<T>(
   f: (x: number) => T,
   start: number,
   n: number,
