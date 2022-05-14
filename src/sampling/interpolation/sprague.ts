@@ -30,10 +30,7 @@ function aCoefficients(window: number[]): number[] {
   return a;
 }
 
-export function spragueInterpolator(
-  x: number,
-  samples: readonly number[]
-): number {
+export function spragueInterpolator(x: number, samples: readonly number[]): number {
   const x0 = Math.floor(x);
   const t = x - x0;
   const w = getWindow(x0, samples, 6, spragueExtrapolate);

@@ -28,11 +28,5 @@ describe("linear interpolator", () => {
     range(0, samples.length - 1),
     samples.slice(0, samples.length - 1)
   );
-  testSampler(
-    "should interpolate when sampling at arbitrary points",
-    linearInterpolator,
-    samples,
-    x,
-    y
-  );
+  testSampler("should interpolate when sampling at arbitrary points", linearInterpolator, samples, x, y);
 });

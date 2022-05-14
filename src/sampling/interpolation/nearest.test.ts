@@ -28,11 +28,5 @@ describe("nearest interpolator", () => {
     samples.slice(0, samples.length - 1),
     range(0, samples.length - 1)
   );
-  testSampler(
-    "should interpolate when sampling at arbitrary points",
-    nearestInterpolator,
-    samples,
-    x,
-    y
-  );
+  testSampler("should interpolate when sampling at arbitrary points", nearestInterpolator, samples, x, y);
 });
