@@ -6,12 +6,12 @@ expect.extend({ toBeDeepCloseTo, toMatchCloseTo });
 
 describe("SpectralShape", () => {
   describe("constructor", () => {
-    it("should construct with span", () => {
+    it("should construct with domain", () => {
       const s = new Shape([0, 10], 1);
       expect(s.start).toBe(0);
       expect(s.end).toBe(10);
       expect(s.interval).toBe(1);
-      expect(s.span).toEqual([0, 10]);
+      expect(s.domain).toEqual([0, 10]);
     });
 
     it("should construct with start and end", () => {
@@ -19,7 +19,7 @@ describe("SpectralShape", () => {
       expect(s.start).toBe(-3);
       expect(s.end).toBe(15);
       expect(s.interval).toBe(0.3);
-      expect(s.span).toEqual([-3, 15]);
+      expect(s.domain).toEqual([-3, 15]);
     });
   });
 
@@ -29,7 +29,7 @@ describe("SpectralShape", () => {
       expect(() => new Shape(10, 5, 1)).toThrow();
     });
 
-    it("should throw interval does not fit in span", () => {
+    it("should throw interval does not fit in domain", () => {
       expect(() => new Shape(-0.5, 0.4, 0.1)).not.toThrow();
       expect(() => new Shape(2, 5, 2)).toThrow();
       expect(() => new Shape(2, 5.1, 1)).toThrow();

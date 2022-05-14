@@ -1,29 +1,30 @@
 import { mapRange, range } from "../utils/utils";
 
 export class Shape {
-  start: number; // wavelength of first sample of distribution [nm]
-  end: number; // wavelength of last sample of distribution [nm]
-  interval: number; // sample interval [nm]
+  readonly start: number; // wavelength of first sample of distribution [nm]
+  readonly end: number; // wavelength of last sample of distribution [nm]
+  readonly interval: number; // sample interval [nm]
+
   constructor(start: number, end: number, interval: number);
-  constructor(span: [number, number], interval: number);
+  constructor(domain: [number, number], interval: number);
   constructor(
-    startOrSpan: number | [number, number],
+    startOrDomain: number | [number, number],
     endOrInterval: number,
     interval: number = endOrInterval
   ) {
-    if (Array.isArray(startOrSpan)) {
-      this.start = startOrSpan[0];
-      this.end = startOrSpan[1];
+    if (Array.isArray(startOrDomain)) {
+      this.start = startOrDomain[0];
+      this.end = startOrDomain[1];
       this.interval = endOrInterval;
     } else {
-      this.start = startOrSpan;
+      this.start = startOrDomain;
       this.end = endOrInterval;
       this.interval = interval;
     }
     this.validate();
   }
 
-  get span(): [number, number] {
+  get domain(): [number, number] {
     return [this.start, this.end];
   }
 
@@ -55,14 +56,14 @@ export class Shape {
         `End wavelength ${this.end} must be equal or larger than start wavelength ${this.start}`
       );
     }
-    if (this.interval <= 0 && this.start !== this.end) {
+    if (this.interval <= 0) {
       throw new Error(`Interval ${this.interval} must be larger than zero`);
     }
     const remainder = (this.end - this.start) % this.interval;
     const tol = 1e-8;
     if (remainder > tol && remainder < this.interval - tol) {
       throw new Error(
-        `Span [${this.start}, ${this.end}] does not match sampling interval ${this.interval}`
+        `Domain [${this.start}, ${this.end}] does not match sampling interval ${this.interval}`
       );
     }
   }

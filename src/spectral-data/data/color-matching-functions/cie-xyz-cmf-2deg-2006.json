@@ -1,8 +1,8 @@
 {
   "description": "CIE (2012) 2-deg XYZ CMFs transformed from the CIE (2006) 2-deg LMS cone fundamentals",
-  "span": [390, 830],
+  "domain": [390, 830],
   "interval": 5,
-  "values": [
+  "samples": [
     [3.769647e-3, 4.146161e-4, 1.84726e-2],
     [9.382967e-3, 1.059646e-3, 4.609784e-2],
     [2.214302e-2, 2.452194e-3, 1.09609e-1],
