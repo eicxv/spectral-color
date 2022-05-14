@@ -1,7 +1,7 @@
 import { toBeDeepCloseTo, toMatchCloseTo } from "jest-matcher-deep-close-to";
 import { describe, expect, test } from "vitest";
-import { nearestExtrapolator } from "../extrapolation/extrapolation";
-import { range, transpose } from "./../utils/utils";
+import { range } from "../utils/utils";
+import { nearestExtrapolator } from "./extrapolation/nearest";
 import { linearInterpolator } from "./interpolation/linear";
 import { composeSampler, Sampler } from "./sampling";
 
@@ -12,12 +12,7 @@ function zip<T, U>(a: T[], b: U[]): [T, U][] {
 }
 
 describe("compose sampler", () => {
-  function testScalar(
-    sampler: Sampler,
-    samples: number[] | number[][],
-    x: number[],
-    y: number[]
-  ): void {
+  function testScalar(sampler: Sampler, samples: number[] | number[][], x: number[], y: number[]): void {
     test.each(zip(x, y))("single sample", (x, y) => {
       expect(sampler(x, samples)).toBeDeepCloseTo(y, 10);
     });
@@ -25,17 +20,12 @@ describe("compose sampler", () => {
       expect(sampler(x, samples)).toBeDeepCloseTo(y, 10);
     });
   }
-  function testVector(
-    sampler: Sampler,
-    samples: number[] | number[][],
-    x: number[],
-    y: number[][]
-  ): void {
+  function testVector(sampler: Sampler, samples: number[] | number[][], x: number[], y: number[][]): void {
     test.each(zip(x, y))("single sample", (x, y) => {
       expect(sampler(x, samples)).toBeDeepCloseTo(y, 10);
     });
     test("multi sample", () => {
-      expect(sampler(x, samples)).toBeDeepCloseTo(transpose(y), 10);
+      expect(sampler(x, samples)).toBeDeepCloseTo(y, 10);
     });
   }
   const sampler = composeSampler(linearInterpolator, nearestExtrapolator);

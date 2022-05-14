@@ -1,223 +1,130 @@
-import { nearestExtrapolator } from "../extrapolation/extrapolation";
-import { Interpolator } from "../interpolation/interpolation";
-import * as interp from "../interpolation/scalar-interpolation";
-import * as vectorInterp from "../interpolation/vector-interpolation";
+import { nearestExtrapolator } from "../sampling/extrapolation/nearest";
+import { linearInterpolator } from "../sampling/interpolation/linear";
+import { spragueInterpolator } from "../sampling/interpolation/sprague";
+import { composeSampler, Extrapolator, Interpolator, Sampler } from "../sampling/sampling";
+import { add } from "./operators";
 import { Shape } from "./shape";
 
-export interface ISpectralDistribution<T> {
+type DistributedArray<T> = T extends any ? T[] : never;
+
+interface SpectralDistributionConfig<T extends number | number[]> {
   shape: Shape;
-  [Symbol.iterator](): IterableIterator<[number, T]>;
-  wavelengths(): IterableIterator<number>;
-  samples(): IterableIterator<T>;
-  sampleAt(wavelength: number): T;
-  sampleAt(wavelength: number[]): T[];
-  sampleAt(wavelength: number | number[]): T | T[];
-  sum(): T;
-  zipWith<OtherT>(
-    other: ISpectralDistribution<OtherT>,
-    fun: (a: T, b: OtherT) => number
-  ): ISpectralDistribution<number>;
-  zipWith<OtherT>(
-    other: ISpectralDistribution<OtherT>,
-    fun: (a: T, b: OtherT) => number[]
-  ): ISpectralDistribution<number[]>;
-  map(fun: (a: T) => number): ISpectralDistribution<number>;
-  map(fun: (a: T) => number[]): ISpectralDistribution<number[]>;
+  samples: DistributedArray<T>;
+  interpolator?: Interpolator;
+  extrapolator?: Extrapolator;
 }
 
-abstract class BaseSpectralDistribution<T extends number | number[]>
-  implements ISpectralDistribution<T>
-{
+export class SpectralDistribution<T extends number | number[]> {
   shape: Shape;
-  protected abstract interpolator: Interpolator<T>;
-  protected abstract extrapolate: (
-    wavelength: number,
-    sample: readonly T[]
-  ) => T;
-  protected _samples: Array<T>;
+  samples: DistributedArray<T>;
+  protected interpolator: Interpolator;
+  protected extrapolator: Extrapolator;
+  protected sampler: Sampler;
 
-  constructor(shape: Shape, samples: Array<T>);
-  constructor(span: [number, number], interval: number, samples: Array<T>);
-  constructor(start: number, interval: number, samples: Array<T>);
-  constructor(
-    shapeSpanOrStart: number | [number, number] | Shape,
-    samplesOrInterval: number | Array<T>,
-    samplesOrUndef?: Array<T>
-  ) {
-    this.shape = this.initShape(
-      shapeSpanOrStart,
-      samplesOrInterval,
-      samplesOrUndef
-    );
-    this._samples = samplesOrUndef ?? (samplesOrInterval as Array<T>);
-    this.validateSampleCount();
+  constructor(config: SpectralDistributionConfig<T>) {
+    this.shape = config.shape;
+    this.samples = config.samples;
+    this.validate();
+    this.interpolator = config.interpolator ?? this.defaultInterpolator();
+    this.extrapolator = config.extrapolator ?? this.defaultExtrapolator();
+    this.sampler = composeSampler(this.interpolator, this.extrapolator);
   }
 
-  private validateSampleCount(): void {
-    const n = this._samples.length;
-    const expected = this.shape.sampleCount();
-    if (n !== expected) {
+  private validate(): void {
+    if (this.samples.length == 0) {
+      throw new Error("Must have at least one sample");
+    }
+    if (this.samples.length !== this.shape.sampleCount()) {
       throw new Error("Sample count does not match shape");
     }
   }
 
-  private initShape(
-    shapeSpanOrStart: number | [number, number] | Shape,
-    samplesOrInterval: number | Array<T>,
-    samplesOrUndef?: Array<T>
-  ): Shape {
-    if (shapeSpanOrStart instanceof Shape) {
-      return shapeSpanOrStart;
-    }
-    if (Array.isArray(shapeSpanOrStart)) {
-      const span = shapeSpanOrStart;
-      const interval = samplesOrInterval as number;
-      return new Shape(span, interval);
-    } else {
-      const start = shapeSpanOrStart;
-      const interval = samplesOrInterval as number;
-      const samples = samplesOrUndef as Array<T>;
-      const end = start + (samples.length - 1) * interval;
-      return new Shape(start, end, interval);
-    }
+  private defaultInterpolator(): Interpolator {
+    return this.samples.length >= 6 ? spragueInterpolator : linearInterpolator;
   }
 
-  *[Symbol.iterator](): IterableIterator<[number, T]> {
-    const wl = this.wavelengths();
-    for (const v of this.samples()) {
-      yield [wl.next().value, v];
-    }
+  private defaultExtrapolator(): Interpolator {
+    return nearestExtrapolator;
   }
 
-  *wavelengths(): IterableIterator<number> {
-    const { start, interval } = this.shape;
-    for (let i = 0; i < this._samples.length; i++) {
-      yield start + i * interval;
-    }
-  }
-
-  setInterpolator(Interpolator: new (samples: T[]) => Interpolator<T>): void {
-    this.interpolator = new Interpolator(this._samples);
-  }
-
-  samples(): IterableIterator<T> {
-    return this._samples[Symbol.iterator]();
-  }
-
-  private _sampleAt(wavelength: number): T {
-    const { start, interval } = this.shape;
-    const arrDomain = (wavelength - start) / interval;
-    if (arrDomain >= 0 && arrDomain <= this._samples.length - 1) {
-      return this.interpolator.sampleAt(arrDomain);
-    } else {
-      return this.extrapolate(arrDomain, this._samples);
-    }
-  }
-
-  sampleAt(wavelength: number): T;
-  sampleAt(wavelength: number[]): T[];
-  sampleAt(wavelength: number | number[]): T | T[];
-  sampleAt(wavelength: number | number[]): T | T[] {
+  protected toArrayDomain(wavelength: number): number;
+  protected toArrayDomain(wavelengths: number[]): number[];
+  protected toArrayDomain(wavelength: number | number[]): number | number[];
+  protected toArrayDomain(wavelength: number | number[]): number | number[] {
     if (Array.isArray(wavelength)) {
-      return wavelength.map(this._sampleAt.bind(this));
+      return wavelength.map((w) => this.toArrayDomain(w));
     }
-    return this._sampleAt(wavelength);
+    return (wavelength - this.shape.start) / this.shape.interval;
   }
 
-  protected createNew(
-    span: [number, number],
-    interval: number,
-    samples: Array<number | number[]>
-  ): ISpectralDistribution<number | number[]> {
-    if (Array.isArray(samples[0])) {
-      return new MultiSpectralDistribution(
-        span,
-        interval,
-        samples as number[][]
-      );
-    } else {
-      return new SpectralDistribution(span, interval, samples as number[]);
-    }
+  sampleAt<U extends number | number[]>(wavelength: U): U extends number ? T : DistributedArray<T> {
+    const wl = this.toArrayDomain(wavelength);
+    return this.sampler(wl, this.samples) as U extends number ? T : DistributedArray<T>;
   }
 
-  zipWith<OtherT>(
-    other: ISpectralDistribution<OtherT>,
-    fun: (a: T, b: OtherT) => number
-  ): ISpectralDistribution<number>;
-  zipWith<OtherT>(
-    other: ISpectralDistribution<OtherT>,
-    fun: (a: T, b: OtherT) => number[]
-  ): ISpectralDistribution<number[]>;
-  zipWith(
-    other: ISpectralDistribution<number | number[]>,
-    fun: (a: T, b: number | number[]) => number | number[]
-  ): ISpectralDistribution<number | number[]> {
-    let wl = [...this.wavelengths()];
-    wl = wl.filter(other.shape.isInDomain.bind(other.shape));
-    if (wl.length === 0) {
-      throw new Error("Degenerate spectrum");
-    }
-    const samples = wl.map((wavelength) => {
-      const a = this.sampleAt(wavelength);
-      const b = other.sampleAt(wavelength);
-      return fun(a, b);
+  resample(shape: Shape): SpectralDistribution<T> {
+    const interpolator = this.interpolator;
+    const extrapolator = this.extrapolator;
+    const samples = this.sampleAt(shape.wavelengths());
+    return new SpectralDistribution({
+      shape,
+      samples,
+      interpolator,
+      extrapolator,
     });
-    return this.createNew(
-      [wl[0], wl[wl.length - 1]],
-      this.shape.interval,
-      samples
-    );
   }
 
-  map(f: (v: T) => number): ISpectralDistribution<number>;
-  map(f: (v: T) => number[]): ISpectralDistribution<number[]>;
-  map(
-    f: (v: T) => number | number[]
-  ): ISpectralDistribution<number | number[]> {
-    const samples = this._samples.map(f);
-    return this.createNew(this.shape.span, this.shape.interval, samples);
+  combine<U extends number | number[]>(
+    other: SpectralDistribution<U>,
+    f: (a: T, b: U) => number
+  ): SpectralDistribution<number>;
+  combine<U extends number | number[]>(
+    other: SpectralDistribution<U>,
+    f: (a: T, b: U) => number[]
+  ): SpectralDistribution<number[]>;
+  combine<U extends number | number[]>(
+    other: SpectralDistribution<U>,
+    f: (a: T, b: U) => number | number[]
+  ): SpectralDistribution<number | number[]> {
+    const shape = this.shape;
+    const otherSamples = other.sampleAt(shape.wavelengths());
+    const newSamples = this.samples.map((sample, i) =>
+      f(sample as T, otherSamples[i] as U)
+    ) as DistributedArray<number | number[]>;
+    return new SpectralDistribution<number | number[]>({
+      shape,
+      samples: newSamples,
+      interpolator: this.interpolator,
+      extrapolator: this.extrapolator,
+    });
   }
 
-  abstract sum(): T;
-}
-
-export class SpectralDistribution extends BaseSpectralDistribution<number> {
-  interpolator = new interp.Sprague(this._samples);
-  extrapolate = nearestExtrapolator;
-
-  sum(): number {
-    const samples = this._samples as number[];
-    const reducer = (acc: number, v: number): number => acc + v;
-    return samples.reduce(reducer, 0);
+  map(f: (x: T) => number): SpectralDistribution<number>;
+  map(f: (x: T) => number[]): SpectralDistribution<number[]>;
+  map(f: (x: T) => number | number[]): SpectralDistribution<number | number[]> {
+    const newSamples = this.samples.map((sample) => f(sample as T)) as DistributedArray<number | number[]>;
+    return new SpectralDistribution<number | number[]>({
+      shape: this.shape,
+      samples: newSamples,
+      interpolator: this.interpolator,
+      extrapolator: this.extrapolator,
+    });
   }
 
-  static fromFunction(
-    f: (x: number) => number,
+  sum(): T {
+    if (Array.isArray(this.samples[0])) {
+      const samples = this.samples as number[][];
+      return samples.reduce(add.vector.vector, new Array(this.samples[0].length).fill(0)) as T;
+    }
+    const samples = this.samples as number[];
+    return samples.reduce(add.scalar.scalar, 0) as T;
+  }
+
+  static fromFunction<U extends number | number[]>(
+    f: (x: number) => U,
     shape: Shape
-  ): SpectralDistribution {
-    const samples = shape.mapWavelengths(f);
-    return new SpectralDistribution(shape, samples);
-  }
-}
-
-export class MultiSpectralDistribution extends BaseSpectralDistribution<
-  number[]
-> {
-  interpolator = new vectorInterp.Sprague(this._samples);
-  extrapolate = nearestExtrapolator;
-
-  sum(): number[] {
-    const samples = this._samples as number[][];
-    const reducer = (acc: number[], v: number[]): number[] =>
-      acc.map((a, i) => a + v[i]);
-    return samples.reduce(reducer, Array(this._samples[0].length).fill(0));
-  }
-
-  static fromFunction(
-    f: (x: number) => number[],
-    shape: Shape
-  ): MultiSpectralDistribution {
-    const samples = shape.mapWavelengths(f);
-    return new MultiSpectralDistribution(shape, samples);
+  ): SpectralDistribution<U> {
+    const samples = shape.mapWavelengths(f) as DistributedArray<U>;
+    return new SpectralDistribution({ shape, samples });
   }
 }
