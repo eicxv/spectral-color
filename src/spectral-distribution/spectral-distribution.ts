@@ -2,19 +2,28 @@ import { nearestExtrapolator } from "../sampling/extrapolation/nearest";
 import { linearInterpolator } from "../sampling/interpolation/linear";
 import { spragueInterpolator } from "../sampling/interpolation/sprague";
 import { composeSampler, Extrapolator, Interpolator, Sampler } from "../sampling/sampling";
-import { add } from "./operators";
+import {
+  add,
+  broadcastBinaryOperator,
+  BroadcastResult,
+  divide,
+  multiply,
+  SampleType,
+  subtract,
+} from "./operators";
 import { Shape } from "./shape";
 
 type DistributedArray<T> = T extends any ? T[] : never;
+export type SampleT = number | number[];
 
-interface SpectralDistributionConfig<T extends number | number[]> {
+interface SpectralDistributionConfig<T extends SampleT> {
   shape: Shape;
   samples: DistributedArray<T>;
   interpolator?: Interpolator;
   extrapolator?: Extrapolator;
 }
 
-export class SpectralDistribution<T extends number | number[]> {
+export class SpectralDistribution<T extends SampleT> {
   shape: Shape;
   samples: DistributedArray<T>;
   protected interpolator: Interpolator;
@@ -39,6 +48,10 @@ export class SpectralDistribution<T extends number | number[]> {
     }
   }
 
+  get type(): SampleType {
+    return Array.isArray(this.samples[0]) ? SampleType.Vector : SampleType.Scalar;
+  }
+
   private defaultInterpolator(): Interpolator {
     return this.samples.length >= 6 ? spragueInterpolator : linearInterpolator;
   }
@@ -49,15 +62,15 @@ export class SpectralDistribution<T extends number | number[]> {
 
   protected toArrayDomain(wavelength: number): number;
   protected toArrayDomain(wavelengths: number[]): number[];
-  protected toArrayDomain(wavelength: number | number[]): number | number[];
-  protected toArrayDomain(wavelength: number | number[]): number | number[] {
+  protected toArrayDomain(wavelength: SampleT): SampleT;
+  protected toArrayDomain(wavelength: SampleT): SampleT {
     if (Array.isArray(wavelength)) {
       return wavelength.map((w) => this.toArrayDomain(w));
     }
     return (wavelength - this.shape.start) / this.shape.interval;
   }
 
-  sampleAt<U extends number | number[]>(wavelength: U): U extends number ? T : DistributedArray<T> {
+  sampleAt<U extends SampleT>(wavelength: U): U extends number ? T : DistributedArray<T> {
     const wl = this.toArrayDomain(wavelength);
     return this.sampler(wl, this.samples) as U extends number ? T : DistributedArray<T>;
   }
@@ -74,24 +87,16 @@ export class SpectralDistribution<T extends number | number[]> {
     });
   }
 
-  combine<U extends number | number[]>(
-    other: SpectralDistribution<U>,
-    f: (a: T, b: U) => number
-  ): SpectralDistribution<number>;
-  combine<U extends number | number[]>(
-    other: SpectralDistribution<U>,
-    f: (a: T, b: U) => number[]
-  ): SpectralDistribution<number[]>;
-  combine<U extends number | number[]>(
-    other: SpectralDistribution<U>,
-    f: (a: T, b: U) => number | number[]
-  ): SpectralDistribution<number | number[]> {
+  combine<OtherT extends SampleT, OutT extends SampleT>(
+    other: SpectralDistribution<OtherT>,
+    f: (a: T, b: OtherT) => OutT
+  ): SpectralDistribution<OutT> {
     const shape = this.shape;
     const otherSamples = other.sampleAt(shape.wavelengths());
     const newSamples = this.samples.map((sample, i) =>
-      f(sample as T, otherSamples[i] as U)
-    ) as DistributedArray<number | number[]>;
-    return new SpectralDistribution<number | number[]>({
+      f(sample as T, otherSamples[i] as OtherT)
+    ) as DistributedArray<OutT>;
+    return new SpectralDistribution<OutT>({
       shape,
       samples: newSamples,
       interpolator: this.interpolator,
@@ -99,11 +104,9 @@ export class SpectralDistribution<T extends number | number[]> {
     });
   }
 
-  map(f: (x: T) => number): SpectralDistribution<number>;
-  map(f: (x: T) => number[]): SpectralDistribution<number[]>;
-  map(f: (x: T) => number | number[]): SpectralDistribution<number | number[]> {
-    const newSamples = this.samples.map((sample) => f(sample as T)) as DistributedArray<number | number[]>;
-    return new SpectralDistribution<number | number[]>({
+  map<OutT extends SampleT>(f: (x: T) => OutT): SpectralDistribution<OutT> {
+    const newSamples = this.samples.map((sample) => f(sample as T)) as DistributedArray<OutT>;
+    return new SpectralDistribution<OutT>({
       shape: this.shape,
       samples: newSamples,
       interpolator: this.interpolator,
@@ -111,19 +114,68 @@ export class SpectralDistribution<T extends number | number[]> {
     });
   }
 
+  reduce<OutT>(f: (acc: OutT, x: T, i: number, arr: T[]) => OutT, initial: OutT): OutT {
+    const samples = this.samples as T[];
+    return samples.reduce(f, initial);
+  }
+
   sum(): T {
     if (Array.isArray(this.samples[0])) {
       const samples = this.samples as number[][];
-      return samples.reduce(add.vector.vector, new Array(this.samples[0].length).fill(0)) as T;
+      const sum = new Array(this.samples[0].length).fill(0);
+      for (const sample of samples) {
+        for (let i = 0; i < sample.length; i++) {
+          sum[i] += sample[i];
+        }
+      }
+      return sum as T;
     }
     const samples = this.samples as number[];
-    return samples.reduce(add.scalar.scalar, 0) as T;
+    const reducer = (a: number, b: number): number => a + b;
+    return samples.reduce(reducer, 0) as T;
   }
 
-  static fromFunction<U extends number | number[]>(
-    f: (x: number) => U,
-    shape: Shape
-  ): SpectralDistribution<U> {
+  add<OtherT extends SampleT>(
+    other: SpectralDistribution<OtherT>
+  ): SpectralDistribution<BroadcastResult<T, OtherT>> {
+    return this.broadcastBinaryOperator(other, add);
+  }
+
+  subtract<OtherT extends SampleT>(
+    other: SpectralDistribution<OtherT>
+  ): SpectralDistribution<BroadcastResult<T, OtherT>> {
+    return this.broadcastBinaryOperator(other, subtract);
+  }
+
+  multiply<OtherT extends SampleT>(
+    other: SpectralDistribution<OtherT>
+  ): SpectralDistribution<BroadcastResult<T, OtherT>> {
+    return this.broadcastBinaryOperator(other, multiply);
+  }
+
+  divide<OtherT extends SampleT>(
+    other: SpectralDistribution<OtherT>
+  ): SpectralDistribution<BroadcastResult<T, OtherT>> {
+    return this.broadcastBinaryOperator(other, divide);
+  }
+
+  broadcastBinaryOperator<OtherT extends SampleT>(
+    other: SpectralDistribution<OtherT> | SampleT,
+    operator: (a: number, b: number) => number
+  ): SpectralDistribution<BroadcastResult<T, OtherT>>;
+  broadcastBinaryOperator(
+    other: SpectralDistribution<SampleT> | SampleT,
+    operator: (a: number, b: number) => number
+  ): SpectralDistribution<SampleT> {
+    const f = broadcastBinaryOperator(operator, this, other);
+    if (!(other instanceof SpectralDistribution)) {
+      const fUnary = (a: T): BroadcastResult<T, typeof other> => f(a, other);
+      return this.map(fUnary);
+    }
+    return this.combine(other, f as (a: T, b: SampleT) => SampleT);
+  }
+
+  static fromFunction<U extends SampleT>(f: (x: number) => U, shape: Shape): SpectralDistribution<U> {
     const samples = shape.mapWavelengths(f) as DistributedArray<U>;
     return new SpectralDistribution({ shape, samples });
   }
