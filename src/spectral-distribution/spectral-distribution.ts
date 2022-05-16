@@ -52,11 +52,15 @@ export class SpectralDistribution<T extends SampleT> {
     return Array.isArray(this.samples[0]) ? SampleType.Vector : SampleType.Scalar;
   }
 
+  get channels(): number | null {
+    return Array.isArray(this.samples[0]) ? this.samples[0].length : null;
+  }
+
   private defaultInterpolator(): Interpolator {
     return this.samples.length >= 6 ? spragueInterpolator : linearInterpolator;
   }
 
-  private defaultExtrapolator(): Interpolator {
+  private defaultExtrapolator(): Extrapolator {
     return nearestExtrapolator;
   }
 
