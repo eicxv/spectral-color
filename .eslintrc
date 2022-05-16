@@ -5,9 +5,11 @@
     "ecmaVersion": 2018,
     "sourceType": "module"
   },
+  "plugins": ["@typescript-eslint/eslint-plugin", "eslint-plugin-tsdoc"],
   "rules": {
+    "tsdoc/syntax": "warn",
     "@typescript-eslint/explicit-function-return-type": 1,
-    "@typescript-eslint/no-explicit-any": 1,
+    "@typescript-eslint/no-explicit-any": 0,
     "@typescript-eslint/no-inferrable-types": [
       "warn",
       {
