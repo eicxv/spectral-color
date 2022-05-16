@@ -42,27 +42,27 @@ describe("SpectralShape", () => {
     });
   });
 
-  describe("isInDomain", () => {
+  describe("inDomain", () => {
     it("is false outside domain", () => {
       const s = new Shape(-1.5, 9, 0.5);
-      expect(s.isInDomain(-2)).toBe(false);
-      expect(s.isInDomain(11)).toBe(false);
+      expect(s.inDomain(-2)).toBe(false);
+      expect(s.inDomain(11)).toBe(false);
     });
 
     it("is true inside domain", () => {
       const s = new Shape(-1.5, 9, 0.5);
-      expect(s.isInDomain(-1.5)).toBe(true);
-      expect(s.isInDomain(0)).toBe(true);
-      expect(s.isInDomain(5)).toBe(true);
-      expect(s.isInDomain(9)).toBe(true);
+      expect(s.inDomain(-1.5)).toBe(true);
+      expect(s.inDomain(0)).toBe(true);
+      expect(s.inDomain(5)).toBe(true);
+      expect(s.inDomain(9)).toBe(true);
     });
   });
 
   describe("sampleCount", () => {
     it("calculates correct count", () => {
-      expect(new Shape(-1.5, 9, 0.5).sampleCount()).toBe(22);
-      expect(new Shape(-3, -2, 0.5).sampleCount()).toBe(3);
-      expect(new Shape(0, 1, 0.1).sampleCount()).toBe(11);
+      expect(new Shape(-1.5, 9, 0.5).count).toBe(22);
+      expect(new Shape(-3, -2, 0.5).count).toBe(3);
+      expect(new Shape(0, 1, 0.1).count).toBe(11);
     });
   });
 });

@@ -43,7 +43,7 @@ export class SpectralDistribution<T extends SampleT> {
     if (this.samples.length == 0) {
       throw new Error("Must have at least one sample");
     }
-    if (this.samples.length !== this.shape.sampleCount()) {
+    if (this.samples.length !== this.shape.count) {
       throw new Error("Sample count does not match shape");
     }
   }
@@ -180,7 +180,7 @@ export class SpectralDistribution<T extends SampleT> {
   }
 
   static fromFunction<U extends SampleT>(f: (x: number) => U, shape: Shape): SpectralDistribution<U> {
-    const samples = shape.mapWavelengths(f) as DistributedArray<U>;
+    const samples = shape.map(f) as DistributedArray<U>;
     return new SpectralDistribution({ shape, samples });
   }
 }

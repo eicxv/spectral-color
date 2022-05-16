@@ -29,24 +29,24 @@ export class Shape {
   }
 
   *[Symbol.iterator](): IterableIterator<number> {
-    for (let i = 0; i < this.sampleCount(); i++) {
+    for (let i = 0; i < this.count; i++) {
       yield this.start + i * this.interval;
     }
   }
 
   wavelengths(): number[] {
-    return range(this.start, this.sampleCount(), this.interval);
+    return range(this.start, this.count, this.interval);
   }
 
-  mapWavelengths<T>(f: (wl: number) => T): T[] {
-    return mapRange(f, this.start, this.sampleCount(), this.interval);
+  map<OutType>(f: (wavelength: number) => OutType): OutType[] {
+    return mapRange(f, this.start, this.count, this.interval);
   }
 
-  sampleCount(): number {
+  get count(): number {
     return Math.round((this.end - this.start) / this.interval) + 1;
   }
 
-  isInDomain(x: number): boolean {
+  inDomain(x: number): boolean {
     return x >= this.start && x <= this.end;
   }
 
