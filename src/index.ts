@@ -1,0 +1,10 @@
+export { spdToXyz } from "./../dist/distribution-to-xyz";
+export * as blackBody from "./black-body/black-body";
+export { nearestExtrapolator } from "./sampling/extrapolation/nearest";
+export { linearInterpolator } from "./sampling/interpolation/linear";
+export { nearestInterpolator } from "./sampling/interpolation/nearest";
+export { spragueInterpolator } from "./sampling/interpolation/sprague";
+export * from "./spectral-data/color-matching-functions";
+export * from "./spectral-data/illuminants";
+export { Shape } from "./spectral-distribution/shape";
+export { SpectralDistribution } from "./spectral-distribution/spectral-distribution";
