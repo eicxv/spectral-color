@@ -1,5 +1,7 @@
 import { toBeDeepCloseTo, toMatchCloseTo } from "jest-matcher-deep-close-to";
 import { beforeEach, describe, expect, it, test } from "vitest";
+import { nearestExtrapolator } from "../sampling/extrapolation/nearest";
+import { spragueInterpolator } from "../sampling/interpolation/sprague";
 import { Shape } from "./shape";
 import { SpectralDistribution } from "./spectral-distribution";
 
@@ -50,6 +52,25 @@ describe("SpectralDistribution", () => {
     it("should extrapolate", () => {
       expect(sd.sampleAt([-0.05, 1.5])).toBeDeepCloseTo([0, 10]);
       expect(sd.sampleAt(-1)).toBeDeepCloseTo(0);
+    });
+  });
+
+  describe("resample", () => {
+    let sd: SpectralDistribution<number>;
+    const samples = [-4, 0, 2, 1, 4, 7];
+    beforeEach(() => {
+      const shape = new Shape([0, 2.5], 0.5);
+      sd = new SpectralDistribution({
+        shape,
+        samples,
+        interpolator: spragueInterpolator,
+        extrapolator: nearestExtrapolator,
+      });
+    });
+    it("resampling to same shape should return original samples", () => {
+      expectSD(sd.resample(sd.shape), { shape: new Shape([0, 2.5], 0.5), samples: [-4, 0, 2, 1, 4, 7] }, [
+        sd,
+      ]);
     });
   });
 
