@@ -15,12 +15,6 @@ export type BroadcastResult<A extends SampleT, B extends SampleT> = A extends nu
 
 type BroadcastSignature<A extends SampleT, B extends SampleT> = (a: A, b: B) => BroadcastResult<A, B>;
 
-type UnaryOperator =
-  | ((a: number) => number)
-  | ((a: number) => number[])
-  | ((a: number[]) => number)
-  | ((a: number[]) => number[]);
-
 type BinaryOperator =
   | ((a: number, b: number) => number)
   | ((a: number, b: number) => number[])

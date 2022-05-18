@@ -30,6 +30,19 @@ function aCoefficients(window: number[]): number[] {
   return a;
 }
 
+/**
+ * Sprague Interpolator
+ *
+ * Fifth order polynomial interpolator. Recommended for spectral distributions.
+ *
+ * @remarks Only valid for x \>= 0 and x \< samples.length.
+ *
+ * Requires at least 5 samples.
+ *
+ * @param x - free variable to sample at
+ * @param samples - samples to interpolate
+ * @returns interpolator
+ */
 export function spragueInterpolator(x: number, samples: readonly number[]): number {
   const x0 = Math.floor(x);
   const t = x - x0;

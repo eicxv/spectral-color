@@ -1,5 +1,5 @@
 {
-  "description": "CIE (1931) 2-deg colour matching functions",
+  "description": "CIE (1931) 2-deg XYZ colour matching functions",
   "domain": [360, 830],
   "interval": 5,
   "samples": [

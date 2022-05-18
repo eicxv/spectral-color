@@ -1,3 +1,14 @@
+/**
+ * Nearest Neighbour Extrapolator
+ *
+ * Selects the closest value from the given array.
+ *
+ * Will throw an error if the point is inside the domain.
+ *
+ * @param x - free variable to sample at
+ * @param samples - samples to extrapolate from
+ * @returns extrapolator
+ */
 export function nearestExtrapolator(x: number, samples: readonly number[][]): number[];
 export function nearestExtrapolator(x: number, samples: readonly number[]): number;
 export function nearestExtrapolator(
