@@ -1,8 +1,23 @@
 {
   "name": "spectral-color",
   "version": "0.1.0",
-  "description": "Library for working with color and spectral distributions. ",
+  "description": "Library for working with color and spectral distributions.",
   "type": "module",
+  "files": [
+    "dist"
+  ],
+  "types": "./dist/index.d.ts",
+  "main": "./dist/spectral-color.umd.js",
+  "module": "./dist/spectral-color.es.js",
+  "exports": {
+    ".": {
+      "import": "./dist/spectral-color.es.js",
+      "require": "./dist/spectral-color.umd.js"
+    }
+  },
+  "engines": {
+    "node": "> 14"
+  },
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest watch",
@@ -40,6 +55,7 @@
     "prettier-eslint": "^14.0.2",
     "typescript": "^4.6.4",
     "vite": "^2.9.8",
+    "vite-plugin-dts": "^1.1.1",
     "vitest": "^0.12.0"
   }
 }
